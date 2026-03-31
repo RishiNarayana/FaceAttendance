@@ -1,31 +1,21 @@
 import React, { useState, useEffect, useContext } from "react";
-import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
-import FaceRegistration from "./FaceRegistration"; 
-import MarkAttendance from "./MarkAttendance"; 
+import api from "../api";
+import FaceRegistration from "./FaceRegistration";
+import MarkAttendance from "./MarkAttendance";
 
 const StudentDashboard = () => {
   const { user } = useContext(AuthContext);
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  // State to track which subject is currently open for registration or verification
+
   const [activeRegSubject, setActiveRegSubject] = useState(null);
   const [activeVerSubject, setActiveVerSubject] = useState(null);
 
   const fetchSubjects = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/student/my-subjects", {
-        headers: { Authorization: `Bearer ${user.token}` }
-      });
-
-      // Map subjects
-      const subjectsWithFaceFlag = res.data.map(s => ({
-        ...s,
-        faceRegistered: s.faceRegistered || false 
-      }));
-
-      setSubjects(subjectsWithFaceFlag);
+      const res = await api.get("/student/my-subjects");
+      setSubjects(res.data.map((s) => ({ ...s, faceRegistered: s.faceRegistered || false })));
     } catch (err) {
       console.error(err);
     } finally {
@@ -37,6 +27,7 @@ const StudentDashboard = () => {
     fetchSubjects();
     const interval = setInterval(fetchSubjects, 30000);
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.token]);
 
   return (
@@ -63,7 +54,7 @@ const StudentDashboard = () => {
                 borderLeft: `6px solid ${s.activeWindow ? "var(--secondary)" : "#E5E7EB"}`,
                 transition: "transform 0.2s ease",
                 backgroundColor: "white",
-                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+                boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "15px" }}>
@@ -72,49 +63,34 @@ const StudentDashboard = () => {
                   <p style={{ margin: 0, fontSize: "14px", color: "var(--text-muted)" }}>Professor: {s.teacher?.name}</p>
                 </div>
                 {s.activeWindow && (
-                  <span
-                    style={{
-                      backgroundColor: "rgba(16, 185, 129, 0.1)",
-                      color: "var(--secondary)",
-                      fontSize: "12px",
-                      padding: "4px 10px",
-                      borderRadius: "20px",
-                      fontWeight: "600"
-                    }}
-                  >
+                  <span style={{
+                    backgroundColor: "rgba(16,185,129,0.1)", color: "var(--secondary)",
+                    fontSize: "12px", padding: "4px 10px", borderRadius: "20px", fontWeight: "600",
+                  }}>
                     LIVE
                   </span>
                 )}
               </div>
 
               <div style={{ marginBottom: "20px" }}>
-                <p
-                  style={{
-                    fontSize: "13px",
-                    color: s.activeWindow ? "var(--secondary)" : "var(--text-muted)",
-                    fontWeight: "500"
-                  }}
-                >
-                  {s.activeWindow
-                    ? "✨ Attendance window is currently open!"
-                    : "⏳ No active session at the moment."}
+                <p style={{
+                  fontSize: "13px",
+                  color: s.activeWindow ? "var(--secondary)" : "var(--text-muted)",
+                  fontWeight: "500",
+                }}>
+                  {s.activeWindow ? "✨ Attendance window is currently open!" : "⏳ No active session at the moment."}
                 </p>
               </div>
 
-              {/* Registration Flow */}
+              {/* Face ID Registration */}
               {!s.faceRegistered && activeRegSubject !== s._id && (
                 <button
                   onClick={() => { setActiveRegSubject(s._id); setActiveVerSubject(null); }}
                   style={{
-                    marginBottom: "10px",
-                    width: "100%",
-                    backgroundColor: "white",
-                    color: "var(--secondary)",
-                    border: "2px solid var(--secondary)",
-                    cursor: "pointer",
-                    padding: "10px",
-                    borderRadius: "5px",
-                    fontWeight: "600"
+                    marginBottom: "10px", width: "100%",
+                    backgroundColor: "white", color: "var(--secondary)",
+                    border: "2px solid var(--secondary)", cursor: "pointer",
+                    padding: "10px", borderRadius: "5px", fontWeight: "600",
                   }}
                 >
                   Setup Face ID
@@ -124,40 +100,38 @@ const StudentDashboard = () => {
               {activeRegSubject === s._id && (
                 <div style={{ marginBottom: "15px" }}>
                   <FaceRegistration onComplete={() => { setActiveRegSubject(null); fetchSubjects(); }} />
-                  <button onClick={() => setActiveRegSubject(null)} style={{ marginTop: "10px", padding: "5px", fontSize: "12px", cursor: "pointer", background: "none", border: "none", color: "var(--text-muted)", textDecoration: "underline" }}>Cancel Setup</button>
+                  <button onClick={() => setActiveRegSubject(null)}
+                    style={{ marginTop: "10px", padding: "5px", fontSize: "12px", cursor: "pointer", background: "none", border: "none", color: "var(--text-muted)", textDecoration: "underline" }}>
+                    Cancel Setup
+                  </button>
                 </div>
               )}
 
-              {/* Mark Attendance Flow Frontend Capture */}
+              {/* Mark Attendance */}
               {activeVerSubject !== s._id && (
                 <button
                   className={s.activeWindow ? "primary-btn pulse-btn" : "primary-btn"}
                   disabled={!s.activeWindow}
                   onClick={() => { setActiveVerSubject(s._id); setActiveRegSubject(null); }}
                   style={{
-                    margin: 0,
-                    width: "100%",
+                    margin: 0, width: "100%",
                     backgroundColor: s.activeWindow ? "var(--primary)" : "#9CA3AF",
                     cursor: s.activeWindow ? "pointer" : "not-allowed",
-                    padding: "10px",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "5px"
+                    padding: "10px", color: "white", border: "none", borderRadius: "5px",
                   }}
                 >
                   {s.activeWindow ? "Mark Attendance (Face ID)" : "Window Closed"}
                 </button>
               )}
-              
+
               {activeVerSubject === s._id && s.activeWindow && (
-                <MarkAttendance 
-                  subjectId={s._id} 
-                  windowId={s.windowId} 
+                <MarkAttendance
+                  subjectId={s._id}
+                  windowId={s.windowId}
                   onComplete={() => { setActiveVerSubject(null); fetchSubjects(); }}
                   onCancel={() => setActiveVerSubject(null)}
                 />
               )}
-              
             </div>
           ))}
         </div>

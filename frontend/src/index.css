@@ -319,4 +319,85 @@ input, select {
   background: #FEF2F2;
 }
 
+/* ─── Dashboard layout ────────────────────────────────────────────────────── */
+.dashboard-container {
+  padding: 20px;
+}
 
+/* Teacher dashboard two-column grid — extracted so media query can target it */
+.teacher-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+
+/* ─── Mobile breakpoints ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* Auth cards fill screen */
+  .auth-card {
+    max-width: 100% !important;
+    border-radius: 14px;
+    padding: 24px !important;
+  }
+
+  .modern-auth-container {
+    padding: 16px;
+    align-items: flex-start;
+    padding-top: 40px;
+  }
+
+  /* Remove sidebar left offset — sidebar is a slide-out panel */
+  .dashboard-container > header,
+  .dashboard-container main {
+    padding-left: 0 !important;
+  }
+
+  /* Teacher 2-col grid → single column */
+  .teacher-main-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  /* Pending approval rows → stack vertically */
+  .pending-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  /* Tables scroll horizontally */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* Full-width primary button */
+  .primary-btn {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Typography */
+  h1 { font-size: 22px; }
+  h2 { font-size: 20px; }
+  h3 { font-size: 17px; }
+  h4 { font-size: 15px; }
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 18px !important;
+  }
+
+  .modern-auth-container {
+    padding: 12px;
+    padding-top: 24px;
+  }
+
+  .sidebar-logo {
+    font-size: 20px;
+    margin-bottom: 28px;
+  }
+}

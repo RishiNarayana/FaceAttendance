@@ -1,5 +1,5 @@
 import React, { createContext, useState } from "react";
-import axios from "axios";
+import api from "../api";
 
 export const AuthContext = createContext();
 
@@ -7,7 +7,8 @@ const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")) || null);
 
   const login = async (email, password) => {
-    const res = await axios.post("http://localhost:5000/api/auth/login", { email, password });
+    // /auth/login is public — api.js base already points to /api
+    const res = await api.post("/auth/login", { email, password });
     localStorage.setItem("user", JSON.stringify(res.data));
     setUser(res.data);
     return res.data;

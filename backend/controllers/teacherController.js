@@ -1,10 +1,11 @@
 const Subject = require("../models/Subject");
 const User = require("../models/User");
 const AttendanceWindow = require("../models/AttendanceWindow");
+const Attendance = require("../models/Attendance");
 const { sendWindowNotification } = require("../utils/emailService");
 const bcrypt = require("bcryptjs");
 
-// Create student (Member 1 role: teacher creates student login)
+// Create student (teacher creates student login)
 exports.createStudent = async (req, res) => {
   const { name, email, password } = req.body;
   try {
@@ -20,7 +21,7 @@ exports.createStudent = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: "student"
+      role: "student",
     });
 
     res.status(201).json({ message: "Student created successfully", student });
@@ -39,7 +40,7 @@ exports.getMySubjects = async (req, res) => {
   }
 };
 
-// Create a subject (Admin or Teacher might do this, here Teacher creates their own)
+// Create a subject
 exports.createSubject = async (req, res) => {
   const { name } = req.body;
   try {
@@ -77,7 +78,7 @@ exports.addStudentsToSubject = async (req, res) => {
   }
 };
 
-// Attendance Window Logic
+// Set attendance window + notify students (email is non-blocking)
 exports.setAttendanceWindow = async (req, res) => {
   const { subjectId, startTime, endTime } = req.body;
   try {
@@ -92,12 +93,121 @@ exports.setAttendanceWindow = async (req, res) => {
       endTime: new Date(endTime),
     });
 
-    // Notify students
-    subject.students.forEach(async (student) => {
-      await sendWindowNotification(student.email, subject.name, startTime, endTime);
-    });
+    // Non-blocking: email failures won't crash the attendance window creation
+    try {
+      for (const student of subject.students) {
+        await sendWindowNotification(student.email, subject.name, startTime, endTime);
+      }
+    } catch (emailErr) {
+      console.warn("Email notification failed (non-critical):", emailErr.message);
+    }
 
     res.status(201).json({ message: "Attendance window set and students notified", window });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get attendance report for a subject — teacher view
+exports.getAttendanceReport = async (req, res) => {
+  const { subjectId } = req.params;
+  try {
+    const subject = await Subject.findById(subjectId);
+    if (!subject || subject.teacher.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to view this report" });
+    }
+
+    // All sessions for this subject, newest first
+    const windows = await AttendanceWindow.find({ subject: subjectId }).sort({ startTime: -1 });
+
+    // Per-window attendee list (only confirmed-present records)
+    const report = await Promise.all(
+      windows.map(async (w) => {
+        const records = await Attendance.find({
+          subject: subjectId,
+          window: w._id,
+          status: "present",
+        }).populate("student", "name email");
+
+        return {
+          windowId: w._id,
+          startTime: w.startTime,
+          endTime: w.endTime,
+          attendees: records.map((r) => ({
+            name: r.student?.name || "Unknown",
+            email: r.student?.email || "",
+            markedAt: r.createdAt,
+            confidence: r.confidence,
+            reviewedAt: r.teacherReviewedAt,
+          })),
+          count: records.length,
+        };
+      })
+    );
+
+    res.json({ subjectName: subject.name, totalWindows: windows.length, report });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ─── PENDING ATTENDANCE — teacher review flow ────────────────────────────────
+
+// GET  /api/teacher/pending-attendance/:subjectId
+exports.getPendingAttendance = async (req, res) => {
+  const { subjectId } = req.params;
+  try {
+    const subject = await Subject.findById(subjectId);
+    if (!subject || subject.teacher.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const pending = await Attendance.find({ subject: subjectId, status: "pending" })
+      .populate("student", "name email")
+      .populate("window", "startTime endTime")
+      .sort({ createdAt: -1 });
+
+    res.json(pending);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// PUT  /api/teacher/approve-attendance/:attendanceId
+exports.approveAttendance = async (req, res) => {
+  const { attendanceId } = req.params;
+  try {
+    const record = await Attendance.findById(attendanceId).populate("subject");
+    if (!record) return res.status(404).json({ message: "Record not found" });
+    if (record.subject.teacher.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    record.status = "present";
+    record.teacherReviewedAt = new Date();
+    await record.save();
+
+    res.json({ message: "Attendance approved — student marked present" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// PUT  /api/teacher/reject-attendance/:attendanceId
+exports.rejectAttendance = async (req, res) => {
+  const { attendanceId } = req.params;
+  try {
+    const record = await Attendance.findById(attendanceId).populate("subject");
+    if (!record) return res.status(404).json({ message: "Record not found" });
+    if (record.subject.teacher.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    record.status = "absent";
+    record.teacherReviewedAt = new Date();
+    await record.save();
+
+    res.json({ message: "Attendance rejected — student marked absent" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

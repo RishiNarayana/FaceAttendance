@@ -1,8 +1,10 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
+import { useToast } from "./Toast";
 
 const Login = () => {
+  const toast = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -43,7 +45,7 @@ const Login = () => {
           <div className="input-group">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
               <label style={{ margin: 0 }}>Password</label>
-              <a href="#" onClick={(e) => { e.preventDefault(); alert("Forgot Password functionality coming soon!"); }} style={{ fontSize: '13px', color: 'var(--primary)', textDecoration: 'none' }}>Forgot Password?</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); toast.info("Forgot Password functionality coming soon!"); }} style={{ fontSize: '13px', color: 'var(--primary)', textDecoration: 'none' }}>Forgot Password?</a>
             </div>
             <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>

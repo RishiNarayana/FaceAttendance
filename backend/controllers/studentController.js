@@ -39,10 +39,11 @@ exports.getAnalytics = async (req, res) => {
       // Total windows (sessions) held for this subject
       const totalSessions = await AttendanceWindow.countDocuments({ subject: s._id });
       
-      // Sessions attended by this student
+      // Sessions confirmed present by teacher
       const attendedSessions = await Attendance.countDocuments({ 
         subject: s._id, 
-        student: req.user._id 
+        student: req.user._id,
+        status: "present",
       });
 
       return {

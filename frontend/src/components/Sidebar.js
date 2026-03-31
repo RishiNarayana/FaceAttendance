@@ -1,6 +1,7 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "./Toast";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -39,7 +40,7 @@ const Sidebar = () => {
         </div>
 
         {user.role === "teacher" && (
-           <div className="nav-item" onClick={() => { alert("Subject Management focused!"); toggleSidebar(); }}>
+           <div className="nav-item" onClick={() => { navigate("/dashboard"); toggleSidebar(); }}>
              Manage Subjects
            </div>
         )}

@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import { useToast } from "./Toast";
+import api from "../api";
 
 const TeacherRegister = () => {
+  const toast = useToast();
   const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "teacher" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -13,8 +15,8 @@ const TeacherRegister = () => {
     setLoading(true);
     setError("");
     try {
-      await axios.post("http://localhost:5000/api/auth/register", formData);
-      alert("Registration successful! Please login.");
+      await api.post("/auth/register", formData);
+      toast.success("Registration successful! Please login.");
       navigate("/login");
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed. Please try again.");
