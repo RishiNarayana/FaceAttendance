@@ -117,25 +117,24 @@ const FaceRegistration = ({ onComplete }) => {
 
   return (
     <div style={{
-      padding: "20px", border: "1px solid #E5E7EB", borderRadius: "10px",
-      marginTop: "15px", backgroundColor: "white",
-      boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
+      padding: "20px", border: "1px solid rgba(0,0,0,0.05)", borderRadius: "12px",
+      marginTop: "15px", backgroundColor: "var(--background)",
     }}>
-      <h4 style={{ marginTop: 0, marginBottom: "5px", color: "var(--primary)" }}>Secure Face ID Setup</h4>
-      <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "15px" }}>
+      <h4 style={{ marginTop: 0, marginBottom: "5px", color: "var(--primary)", fontSize: "16px" }}>Setup Face ID Verification</h4>
+      <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "15px" }}>
         {modelsLoaded ? "For best results, ensure you are in a well-lit area." : <i>{loadingMsg}</i>}
       </p>
 
       <div style={{ position: "relative", width: "100%", maxWidth: "320px", margin: "0 auto 20px auto" }}>
         <video
           ref={videoRef} autoPlay muted playsInline width="320" height="240"
-          style={{ backgroundColor: "#000", borderRadius: "8px", objectFit: "cover", display: "block", width: "100%" }}
+          style={{ backgroundColor: "#000", borderRadius: "12px", objectFit: "cover", display: "block", width: "100%" }}
         />
         {isCapturing && (
           <div style={{
             position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
-            borderRadius: "8px",
-            border: `4px solid ${progress === 100 ? "#10B981" : "var(--secondary)"}`,
+            borderRadius: "12px",
+            border: `4px solid ${progress === 100 ? "var(--success)" : "var(--primary)"}`,
             boxSizing: "border-box", transition: "border-color 0.3s ease",
             pointerEvents: "none",
           }}>
@@ -143,7 +142,7 @@ const FaceRegistration = ({ onComplete }) => {
               position: "absolute", bottom: "10px", left: "10%", width: "80%",
               backgroundColor: "rgba(0,0,0,0.6)", padding: "5px", borderRadius: "10px",
             }}>
-              <div style={{ width: `${progress}%`, height: "6px", backgroundColor: "#10B981", borderRadius: "5px", transition: "width 0.4s ease" }} />
+              <div style={{ width: `${progress}%`, height: "6px", backgroundColor: "var(--success)", borderRadius: "5px", transition: "width 0.4s ease" }} />
             </div>
             <div style={{
               position: "absolute", top: "10px", width: "100%", textAlign: "center",
@@ -160,9 +159,9 @@ const FaceRegistration = ({ onComplete }) => {
           <button
             onClick={startCamera}
             style={{
-              padding: "10px 15px", cursor: "pointer", backgroundColor: "white",
-              color: "#374151", border: "1px solid #D1D5DB", borderRadius: "5px",
-              fontWeight: "600", flex: 1,
+              padding: "12px 15px", cursor: "pointer", backgroundColor: "white",
+              color: "var(--secondary)", border: "1px solid rgba(0,0,0,0.1)", borderRadius: "8px",
+              fontWeight: "600", flex: 1, fontSize: "13px"
             }}
             disabled={!modelsLoaded}
           >
@@ -171,9 +170,9 @@ const FaceRegistration = ({ onComplete }) => {
           <button
             onClick={startRegistrationFlow}
             style={{
-              padding: "10px 15px", cursor: "pointer",
-              backgroundColor: "var(--secondary, #8B5CF6)", color: "white",
-              border: "none", borderRadius: "5px", fontWeight: "600", flex: 1,
+              padding: "12px 15px", cursor: "pointer",
+              backgroundColor: "var(--primary)", color: "white",
+              border: "none", borderRadius: "8px", fontWeight: "600", flex: 1, fontSize: "13px"
             }}
             disabled={!modelsLoaded}
           >

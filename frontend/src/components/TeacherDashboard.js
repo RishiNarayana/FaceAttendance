@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "./Toast";
 import api from "../api";
+import TeacherDirectory from "./TeacherDirectory";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -66,6 +67,7 @@ const TeacherDashboard = () => {
   const { user } = useContext(AuthContext);
   const toast = useToast();
 
+  const [activeTab, setActiveTab] = useState("dashboard"); // 'dashboard' | 'directory'
   const [subjects, setSubjects] = useState([]);
   const [newSubject, setNewSubject] = useState("");
   const [windowSubject, setWindowSubject] = useState("");
@@ -229,11 +231,52 @@ const TeacherDashboard = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "20px" }}>
-      <h2 style={{ color: "var(--primary)" }}>Teacher Dashboard</h2>
-      <p style={{ color: "var(--text-muted)", marginBottom: "30px" }}>
-        Manage your classes, register students, open attendance sessions, and review face-verified submissions.
-      </p>
+    <div style={{ paddingBottom: "40px" }}>
+      {/* ── HEADER & NAVIGATION TABS ── */}
+      <div style={{ marginBottom: "30px" }}>
+        <h2 style={{ color: "var(--primary)", margin: "0 0 5px 0", fontSize: "28px", fontWeight: "700", letterSpacing: "-0.5px" }}>
+          Teacher Workspace
+        </h2>
+        <p style={{ color: "var(--secondary)", margin: 0, fontSize: "15px" }}>
+          Manage your classes, approve pending attendance, and view comprehensive reports.
+        </p>
+      </div>
+
+      <div style={{ display: "flex", gap: "10px", marginBottom: "30px", borderBottom: "1px solid rgba(0,0,0,0.1)", paddingBottom: "15px", overflowX: "auto" }}>
+        <button 
+          onClick={() => setActiveTab("dashboard")}
+          style={{ 
+            padding: "10px 24px", borderRadius: "12px", border: "none", cursor: "pointer", fontSize: "15px", fontWeight: "600",
+            background: activeTab === "dashboard" ? "var(--primary)" : "transparent",
+            color: activeTab === "dashboard" ? "white" : "var(--secondary)",
+            transition: "0.2s", whiteSpace: "nowrap"
+          }}
+        >
+          Control Panel
+        </button>
+        <button 
+          onClick={() => setActiveTab("directory")}
+          style={{ 
+            padding: "10px 24px", borderRadius: "12px", border: "none", cursor: "pointer", fontSize: "15px", fontWeight: "600",
+            background: activeTab === "directory" ? "var(--primary)" : "transparent",
+            color: activeTab === "directory" ? "white" : "var(--secondary)",
+            transition: "0.2s", whiteSpace: "nowrap"
+          }}
+        >
+          📋 Student Directory & Logs
+        </button>
+        <button 
+          onClick={() => setActiveTab("report")}
+          style={{ 
+            padding: "10px 24px", borderRadius: "12px", border: "none", cursor: "pointer", fontSize: "15px", fontWeight: "600",
+            background: activeTab === "report" ? "var(--primary)" : "transparent",
+            color: activeTab === "report" ? "white" : "var(--secondary)",
+            transition: "0.2s", whiteSpace: "nowrap"
+          }}
+        >
+          📊 Historical Attendance Report
+        </button>
+      </div>
 
       {/* ── SUCCESS MODAL ── */}
       {showModal && createdStudent && (
@@ -243,13 +286,13 @@ const TeacherDashboard = () => {
           justifyContent: "center", alignItems: "center",
           zIndex: 1000, backdropFilter: "blur(5px)",
         }}>
-          <div className="auth-card" style={{ maxWidth: "400px", borderTop: "5px solid var(--secondary)", textAlign: "center" }}>
+          <div className="stat-card" style={{ maxWidth: "400px", borderTop: "5px solid var(--secondary)", textAlign: "center" }}>
             <div style={{ fontSize: "50px", marginBottom: "10px" }}>✅</div>
             <h3 style={{ margin: "0 0 10px 0" }}>Student Created!</h3>
             <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "20px" }}>
               Share these credentials with the student.
             </p>
-            <div style={{ backgroundColor: "#F3F4F6", padding: "15px", borderRadius: "10px", textAlign: "left", marginBottom: "20px" }}>
+            <div style={{ backgroundColor: "#F9FAFB", padding: "15px", borderRadius: "10px", textAlign: "left", marginBottom: "20px", border: "1px solid rgba(0,0,0,0.05)" }}>
               <p style={{ margin: "5px 0", fontSize: "14px" }}><strong>Name:</strong> {createdStudent.name}</p>
               <p style={{ margin: "5px 0", fontSize: "14px" }}><strong>Email:</strong> {createdStudent.email}</p>
               <p style={{ margin: "5px 0", fontSize: "14px" }}>
@@ -258,361 +301,366 @@ const TeacherDashboard = () => {
               </p>
               <p style={{ margin: "5px 0", fontSize: "14px" }}><strong>Subject:</strong> {createdStudent.subject}</p>
             </div>
-            <button className="primary-btn" onClick={() => setShowModal(false)} style={{ width: "100%", margin: 0 }}>
+            <button className="primary-btn pulse-btn" onClick={() => setShowModal(false)} style={{ width: "100%", margin: 0 }}>
               Got it, Dismiss
             </button>
           </div>
         </div>
       )}
 
-      {/* ── PENDING APPROVALS ── */}
-      <section className="auth-card teacher-pending-section" style={{
-        padding: "25px", marginBottom: "30px",
-        borderTop: "4px solid #F59E0B",
-        background: "linear-gradient(135deg, #FFFBEB 0%, #ffffff 100%)",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
-          <span style={{ fontSize: "24px" }}>🔍</span>
-          <h4 style={{ margin: 0, fontSize: "18px" }}>Pending Attendance Approvals</h4>
-          {pendingRecords.length > 0 && (
-            <span style={{
-              backgroundColor: "#EF4444", color: "white",
-              borderRadius: "50%", width: "22px", height: "22px",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "12px", fontWeight: "700",
-            }}>
-              {pendingRecords.length}
-            </span>
-          )}
-        </div>
-        <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: 0, marginBottom: "15px" }}>
-          Students have submitted face + liveness verified requests. Review the confidence score and approve or reject.
-        </p>
+      {/* ── CONDITIONAL RENDER: DIRECTORY ── */}
+      {activeTab === "directory" && (
+        <TeacherDirectory />
+      )}
 
-        <div style={{ display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap", alignItems: "center" }}>
-          <select
-            value={pendingSubjectId}
-            onChange={(e) => setPendingSubjectId(e.target.value)}
-            style={{ flex: 1, minWidth: "180px", padding: "10px 14px", borderRadius: "8px", border: "1px solid #E5E7EB", fontSize: "14px", background: "#F9FAFB" }}
-          >
-            <option value="">Select a subject to review</option>
-            {subjects.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
-          </select>
-          <button
-            onClick={() => fetchPending(pendingSubjectId)}
-            disabled={!pendingSubjectId || pendingLoading}
-            className="primary-btn"
-            style={{ padding: "10px 18px", margin: 0, backgroundColor: "#F59E0B", borderColor: "#F59E0B" }}
-          >
-            {pendingLoading ? "Refreshing…" : "↻ Refresh"}
-          </button>
-        </div>
-
-        {pendingSubjectId && !pendingLoading && pendingRecords.length === 0 && (
-          <div style={{
-            textAlign: "center", padding: "30px", color: "var(--text-muted)",
-            border: "2px dashed #E5E7EB", borderRadius: "10px",
+      {/* ── CONDITIONAL RENDER: CONTROL PANEL ── */}
+      {activeTab === "dashboard" && (
+        <>
+          {/* ── PENDING APPROVALS ── */}
+          <section className="stat-card" style={{
+            marginBottom: "30px",
+            borderLeft: "6px solid #F59E0B",
           }}>
-            <div style={{ fontSize: "32px", marginBottom: "8px" }}>🎉</div>
-            <p style={{ margin: 0, fontSize: "14px" }}>No pending submissions. All caught up!</p>
-          </div>
-        )}
-
-        {pendingRecords.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {pendingRecords.map((rec) => {
-              const conf = confidenceLabel(rec.confidence);
-              const isProcessing = reviewingId === rec._id;
-              return (
-                <div key={rec._id} className="pending-card" style={{
-                  display: "flex", alignItems: "center", gap: "16px",
-                  padding: "16px 20px", backgroundColor: "white",
-                  border: "1px solid #E5E7EB",
-                  borderLeft: `4px solid ${conf.color}`,
-                  borderRadius: "10px", flexWrap: "wrap",
-                  opacity: isProcessing ? 0.6 : 1, transition: "opacity 0.2s",
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(245,158,11,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ fontSize: "18px" }}>🔍</span>
+              </div>
+              <h4 style={{ margin: 0, fontSize: "20px", fontWeight: "700" }}>Pending Attendance Approvals</h4>
+              {pendingRecords.length > 0 && (
+                <span style={{
+                  backgroundColor: "#EF4444", color: "white",
+                  borderRadius: "20px", padding: "2px 8px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "12px", fontWeight: "700",
                 }}>
-                  <div style={{
-                    width: "44px", height: "44px", borderRadius: "50%",
-                    backgroundColor: conf.color + "22",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "18px", flexShrink: 0,
-                  }}>👤</div>
+                  {pendingRecords.length}
+                </span>
+              )}
+            </div>
+            <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px", marginBottom: "20px" }}>
+              Students have submitted face + liveness verified requests. Review and action them.
+            </p>
 
-                  <div style={{ flex: 1, minWidth: "160px" }}>
-                    <p style={{ margin: 0, fontWeight: "600", fontSize: "15px", color: "var(--text-main)" }}>
-                      {rec.student?.name || "Unknown"}
-                    </p>
-                    <p style={{ margin: "2px 0 0", fontSize: "12px", color: "var(--text-muted)" }}>{rec.student?.email}</p>
-                    <p style={{ margin: "2px 0 0", fontSize: "11px", color: "var(--text-muted)" }}>
-                      Submitted: {new Date(rec.createdAt).toLocaleString()}
-                    </p>
-                  </div>
+            <div style={{ display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap", alignItems: "stretch" }}>
+              <div style={{ flex: 1, minWidth: "180px", position: "relative" }}>
+                 <select
+                  value={pendingSubjectId}
+                  onChange={(e) => setPendingSubjectId(e.target.value)}
+                  className="custom-select"
+                >
+                  <option value="" disabled>Select subject to review...</option>
+                  {subjects.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
+                </select>
+              </div>
+              <button
+                onClick={() => fetchPending(pendingSubjectId)}
+                disabled={!pendingSubjectId || pendingLoading}
+                className="primary-btn"
+                style={{ padding: "14px 20px", margin: 0, backgroundColor: "#F59E0B", width: "auto" }}
+              >
+                {pendingLoading ? "Refreshing…" : "↻ Refresh"}
+              </button>
+            </div>
 
-                  <div style={{ minWidth: "140px", fontSize: "12px", color: "var(--text-muted)" }}>
-                    <p style={{ margin: 0, fontWeight: "500" }}>Session window</p>
-                    <p style={{ margin: "2px 0 0" }}>
-                      {rec.window
-                        ? `${new Date(rec.window.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} – ${new Date(rec.window.endTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
-                        : "—"}
-                    </p>
-                    {rec.livenessVerified && (
-                      <span style={{ color: "#10B981", fontSize: "11px", fontWeight: "600" }}>
-                        ✓ Liveness Verified
-                      </span>
-                    )}
-                  </div>
+            {pendingSubjectId && !pendingLoading && pendingRecords.length === 0 && (
+              <div style={{
+                textAlign: "center", padding: "40px", color: "var(--text-muted)",
+                border: "2px dashed rgba(0,0,0,0.1)", borderRadius: "16px",
+                background: "var(--card-bg)"
+              }}>
+                <div style={{ fontSize: "36px", marginBottom: "12px" }}>🎉</div>
+                <p style={{ margin: 0, fontSize: "16px", fontWeight: "500" }}>No pending submissions for this subject. All caught up!</p>
+              </div>
+            )}
 
-                  <div style={{ textAlign: "center", minWidth: "90px" }}>
-                    <div style={{
-                      backgroundColor: conf.color + "18",
-                      border: `1px solid ${conf.color}44`,
-                      borderRadius: "8px", padding: "8px 14px",
+            {pendingRecords.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {pendingRecords.map((rec) => {
+                  const conf = confidenceLabel(rec.confidence);
+                  const isProcessing = reviewingId === rec._id;
+                  return (
+                    <div key={rec._id} className="directory-item" style={{
+                      padding: "20px", border: "1px solid rgba(0,0,0,0.05)",
+                      borderLeft: `4px solid ${conf.color}`,
+                      opacity: isProcessing ? 0.6 : 1, transition: "opacity 0.2s",
+                      flexWrap: "wrap"
                     }}>
-                      <p style={{ margin: 0, fontSize: "20px", fontWeight: "700", color: conf.color }}>{conf.pct}%</p>
-                      <p style={{ margin: 0, fontSize: "11px", fontWeight: "600", color: conf.color }}>{conf.label} Match</p>
-                      <p style={{ margin: 0, fontSize: "10px", color: "var(--text-muted)" }}>
-                        dist: {rec.confidence != null ? rec.confidence.toFixed(3) : "?"}
-                      </p>
+                      <div className="avatar-large" style={{ backgroundColor: conf.color + "22", color: conf.color }}>
+                        {rec.student?.name ? rec.student.name.charAt(0).toUpperCase() : "👤"}
+                      </div>
+
+                      <div style={{ flex: 1, minWidth: "160px" }}>
+                        <p style={{ margin: 0, fontWeight: "700", fontSize: "16px", color: "var(--primary)" }}>
+                          {rec.student?.name || "Unknown"}
+                        </p>
+                        <p style={{ margin: "2px 0 0", fontSize: "13px", color: "var(--secondary)" }}>{rec.student?.email}</p>
+                        <p style={{ margin: "4px 0 0", fontSize: "12px", color: "var(--text-muted)" }}>
+                          Submitted: {new Date(rec.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+
+                      <div style={{ minWidth: "140px", fontSize: "13px", color: "var(--text-muted)" }}>
+                        <p style={{ margin: 0, fontWeight: "600", color: "var(--primary)" }}>Session Window</p>
+                        <p style={{ margin: "4px 0" }}>
+                          {rec.window
+                            ? `${new Date(rec.window.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} – ${new Date(rec.window.endTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                            : "—"}
+                        </p>
+                        {rec.livenessVerified && (
+                          <span style={{ color: "#10B981", fontSize: "12px", fontWeight: "700", background: "rgba(16,185,129,0.1)", padding: "2px 8px", borderRadius: "12px" }}>
+                            ✓ Liveness Verified
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ textAlign: "center", minWidth: "100px" }}>
+                        <div style={{
+                          backgroundColor: conf.color + "18",
+                          border: `1px solid ${conf.color}44`,
+                          borderRadius: "12px", padding: "10px 16px",
+                        }}>
+                          <p style={{ margin: 0, fontSize: "22px", fontWeight: "700", color: conf.color }}>{conf.pct}%</p>
+                          <p style={{ margin: 0, fontSize: "12px", fontWeight: "700", color: conf.color }}>{conf.label}</p>
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", gap: "10px", flexShrink: 0 }}>
+                        <button onClick={() => handleApprove(rec._id)} disabled={isProcessing}
+                          style={{ padding: "12px 20px", backgroundColor: "#10B981", color: "white", border: "none", borderRadius: "12px", cursor: "pointer", fontWeight: "600", fontSize: "14px" }}>
+                          ✓ Approve
+                        </button>
+                        <button onClick={() => handleReject(rec._id)} disabled={isProcessing}
+                          style={{ padding: "12px 20px", backgroundColor: "white", color: "#EF4444", border: "1px solid #EF4444", borderRadius: "12px", cursor: "pointer", fontWeight: "600", fontSize: "14px" }}>
+                          ✕ Reject
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          {/* ── MAIN GRID ── */}
+          <div className="dashboard-grid">
+            {/* LEFT */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+              <section className="stat-card">
+                <h4 style={{ margin: "0 0 6px 0", fontSize: "20px", fontWeight: "700", color: "var(--primary)" }}>📝 Create New Subject</h4>
+                 <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "0", marginBottom: "20px" }}>
+                  Establish a new class for attendance tracking.
+                </p>
+                <form onSubmit={handleCreateSubject} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                  <div className="input-group">
+                    <label style={{ fontSize: "13px", fontWeight: "700", color: "var(--secondary)" }}>Subject Name</label>
+                    <div className="input-icon-wrapper">
+                      <input type="text" placeholder="e.g. Computer Science 101"
+                        value={newSubject} onChange={(e) => setNewSubject(e.target.value)} required />
                     </div>
                   </div>
+                  <button type="submit" className="primary-btn pulse-btn" style={{ padding: "16px", marginTop: "4px" }}>
+                    Create Subject
+                  </button>
+                </form>
+              </section>
 
-                  <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
-                    <button onClick={() => handleApprove(rec._id)} disabled={isProcessing}
-                      style={{ padding: "9px 18px", backgroundColor: "#10B981", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "13px" }}>
-                      ✓ Approve
-                    </button>
-                    <button onClick={() => handleReject(rec._id)} disabled={isProcessing}
-                      style={{ padding: "9px 18px", backgroundColor: "white", color: "#EF4444", border: "1px solid #EF4444", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "13px" }}>
-                      ✕ Reject
-                    </button>
+              <section className="stat-card">
+                <h4 style={{ margin: "0 0 6px 0", fontSize: "20px", fontWeight: "700", color: "var(--primary)" }}>👤 Register New Student</h4>
+                <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "0", marginBottom: "24px" }}>
+                  Credentials will be generated securely.
+                </p>
+                <form onSubmit={handleCreateStudent} style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                  <div className="input-group">
+                    <label style={{ fontSize: "13px", fontWeight: "700", color: "var(--secondary)" }}>Full Name</label>
+                    <div className="input-icon-wrapper">
+                      <input type="text" placeholder="e.g. Jane Smith" value={studentData.name}
+                        onChange={(e) => handleStudentFieldChange("name", e.target.value)} required />
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                  <div className="input-group">
+                    <label style={{ fontSize: "13px", fontWeight: "700", color: "var(--secondary)" }}>Email Address</label>
+                    <div className="input-icon-wrapper">
+                      <input type="email" placeholder="e.g. jane@student.edu" value={studentData.email}
+                        onChange={(e) => handleStudentFieldChange("email", e.target.value)} required />
+                    </div>
+                  </div>
+                  <div className="input-group">
+                     <label style={{ fontSize: "13px", fontWeight: "700", color: "var(--secondary)" }}>Auto-Generated Password</label>
+                    <div className="input-icon-wrapper">
+                      <input type="text" placeholder="Password"
+                        style={{ backgroundColor: "rgba(0,0,0,0.02)", color: "var(--secondary)", fontWeight: "600" }} value={studentData.password}
+                        onChange={(e) => setStudentData({ ...studentData, password: e.target.value })} required />
+                    </div>
+                  </div>
+                  <div className="input-group">
+                    <label style={{ fontSize: "13px", fontWeight: "700", color: "var(--secondary)" }}>Enroll in Subject (Optional)</label>
+                    <select value={studentSubject} onChange={(e) => setStudentSubject(e.target.value)} className="custom-select">
+                      <option value="">-- Do not enroll yet --</option>
+                      {subjects.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
+                    </select>
+                  </div>
+                  <button type="submit" className="primary-btn pulse-btn" style={{ padding: "16px", marginTop: "8px" }}>
+                    Register Student
+                  </button>
+                </form>
+              </section>
+            </div>
+
+            {/* RIGHT */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+              <section className="stat-card" style={{ borderLeft: "6px solid var(--success)" }}>
+                <h4 style={{ margin: "0 0 20px 0", fontSize: "20px", fontWeight: "700", color: "var(--primary)" }}>⏱ Open Attendance Window</h4>
+                <form onSubmit={handleSetWindow} className="auth-form" style={{ gap: "20px" }}>
+                  <div className="input-group">
+                    <select value={windowSubject} onChange={(e) => setWindowSubject(e.target.value)} className="custom-select" required>
+                      <option value="" disabled>Select Subject</option>
+                      {subjects.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="input-group">
+                    <label style={{ fontSize: "13px" }}>Start Time</label>
+                    <div className="input-icon-wrapper">
+                       <input type="datetime-local" value={startTime} onChange={(e) => setStartTime(e.target.value)} required />
+                    </div>
+                  </div>
+                  <div className="input-group">
+                    <label style={{ fontSize: "13px" }}>End Time</label>
+                    <div className="input-icon-wrapper">
+                      <input type="datetime-local" value={endTime} onChange={(e) => setEndTime(e.target.value)} required />
+                    </div>
+                  </div>
+                  <button type="submit" className="primary-btn pulse-btn" style={{ padding: "16px", marginTop: "10px", backgroundColor: "var(--success)" }}>
+                    Activate Window Now
+                  </button>
+                </form>
+              </section>
+
+              <section className="stat-card">
+                <h4 style={{ margin: "0 0 15px 0", fontSize: "20px", fontWeight: "700", color: "var(--primary)" }}>📚 My Subjects Overview</h4>
+                <ul style={{ padding: "0", margin: "0", listStyle: "none" }}>
+                  {subjects.length === 0 && (
+                    <div style={{ padding: "30px", textAlign: "center", background: "var(--card-bg)", borderRadius: "12px" }}>
+                      <p style={{ fontSize: "14px", color: "var(--text-muted)", margin: 0 }}>No subjects created yet.</p>
+                    </div>
+                  )}
+                  {subjects.map((s) => (
+                    <li key={s._id} style={{
+                      padding: "16px 20px", backgroundColor: "var(--card-bg)",
+                      borderRadius: "12px", marginBottom: "12px", border: "1px solid rgba(0,0,0,0.05)",
+                      display: "flex", justifyContent: "space-between", alignItems: "center"
+                    }}>
+                      <strong style={{ display: "block", color: "var(--primary)", fontSize: "16px" }}>{s.name}</strong>
+                      <span style={{ fontSize: "13px", color: "var(--secondary)", fontWeight: "600", background: "rgba(107,91,97,0.1)", padding: "4px 10px", borderRadius: "12px" }}>
+                        {s.students.length} Enrolled
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </div>
           </div>
-        )}
-      </section>
-
-      {/* ── MAIN GRID ── */}
-      <div className="teacher-main-grid">
-        {/* LEFT */}
-        <div>
-          <section className="auth-card" style={{ padding: "25px", marginBottom: "30px", borderTop: "4px solid var(--secondary)" }}>
-            <h4 style={{ margin: "0 0 15px 0", fontSize: "18px" }}>Create New Subject</h4>
-            <form onSubmit={handleCreateSubject} className="auth-form" style={{ gap: "15px" }}>
-              <div className="input-group">
-                <input type="text" placeholder="e.g. Computer Science 101"
-                  value={newSubject} onChange={(e) => setNewSubject(e.target.value)} required />
-              </div>
-              <button type="submit" className="primary-btn" style={{ padding: "10px", marginTop: "0" }}>
-                Create Subject
-              </button>
-            </form>
-          </section>
-
-          <section className="auth-card" style={{ padding: "25px", borderTop: "4px solid var(--primary)" }}>
-            <h4 style={{ margin: "0 0 5px 0", fontSize: "18px" }}>Register New Student</h4>
-            <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "0", marginBottom: "15px" }}>
-              Credentials shown once — share them with the student.
-            </p>
-            <form onSubmit={handleCreateStudent} className="auth-form" style={{ gap: "10px" }}>
-              <div className="input-group">
-                <input type="text" placeholder="Student Name" value={studentData.name}
-                  onChange={(e) => handleStudentFieldChange("name", e.target.value)} required />
-              </div>
-              <div className="input-group">
-                <input type="email" placeholder="Student Email" value={studentData.email}
-                  onChange={(e) => handleStudentFieldChange("email", e.target.value)} required />
-              </div>
-              <div className="input-group">
-                <input type="text" placeholder="Auto-Generated Password"
-                  style={{ backgroundColor: "#F3F4F6" }} value={studentData.password}
-                  onChange={(e) => setStudentData({ ...studentData, password: e.target.value })} required />
-              </div>
-              <div className="input-group">
-                <label style={{ fontSize: "13px" }}>Enroll in Subject (Optional)</label>
-                <select value={studentSubject} onChange={(e) => setStudentSubject(e.target.value)}>
-                  <option value="">-- Do not enroll yet --</option>
-                  {subjects.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
-                </select>
-              </div>
-              <button type="submit" className="primary-btn" style={{ padding: "10px", marginTop: "5px" }}>
-                Register Student
-              </button>
-            </form>
-          </section>
-        </div>
-
-        {/* RIGHT */}
-        <div>
-          <section className="auth-card" style={{ padding: "25px", marginBottom: "30px", borderTop: "4px solid #F59E0B" }}>
-            <h4 style={{ margin: "0 0 15px 0", fontSize: "18px" }}>Open Attendance Window</h4>
-            <form onSubmit={handleSetWindow} className="auth-form" style={{ gap: "15px" }}>
-              <div className="input-group">
-                <select value={windowSubject} onChange={(e) => setWindowSubject(e.target.value)} required>
-                  <option value="">Select Subject</option>
-                  {subjects.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
-                </select>
-              </div>
-              <div className="input-group">
-                <label style={{ fontSize: "13px" }}>Start Time</label>
-                <input type="datetime-local" value={startTime} onChange={(e) => setStartTime(e.target.value)} required />
-              </div>
-              <div className="input-group">
-                <label style={{ fontSize: "13px" }}>End Time</label>
-                <input type="datetime-local" value={endTime} onChange={(e) => setEndTime(e.target.value)} required />
-              </div>
-              <button type="submit" className="primary-btn pulse-btn" style={{ padding: "10px", marginTop: "0" }}>
-                Activate Window
-              </button>
-            </form>
-          </section>
-
-          <section className="auth-card" style={{ padding: "25px", backgroundColor: "white" }}>
-            <h4 style={{ margin: "0 0 15px 0", fontSize: "18px" }}>My Subjects Overview</h4>
-            <ul style={{ padding: "0", margin: "0", listStyle: "none" }}>
-              {subjects.length === 0 && (
-                <p style={{ fontSize: "14px", color: "var(--text-muted)" }}>No subjects created yet.</p>
-              )}
-              {subjects.map((s) => (
-                <li key={s._id} style={{
-                  padding: "15px", backgroundColor: "#F9FAFB",
-                  borderRadius: "8px", marginBottom: "10px", border: "1px solid #E5E7EB",
-                }}>
-                  <strong style={{ display: "block", color: "var(--text-main)" }}>{s.name}</strong>
-                  <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-                    Enrolled Students: {s.students.length}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        </div>
-      </div>
-
-      {/* ── ATTENDANCE REPORT ── */}
-      <section className="auth-card" style={{ padding: "25px", marginTop: "30px", borderTop: "4px solid var(--primary)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", flexWrap: "wrap", gap: "10px" }}>
-          <h4 style={{ margin: 0, fontSize: "18px" }}>📋 Attendance Report</h4>
-          {report && (
-            <button
-              onClick={() => exportToExcel(report, report.subjectName)}
-              style={{
-                display: "flex", alignItems: "center", gap: "6px",
-                padding: "8px 16px", backgroundColor: "#16A34A", color: "white",
-                border: "none", borderRadius: "8px", cursor: "pointer",
-                fontWeight: "600", fontSize: "13px",
-              }}
-            >
-              ⬇ Export to Excel
-            </button>
-          )}
-        </div>
-        <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: 0, marginBottom: "15px" }}>
-          Select a subject to see confirmed attendance records per session.
-        </p>
-
-        <div style={{ display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap" }}>
-          <select
-            value={reportSubjectId}
-            onChange={(e) => setReportSubjectId(e.target.value)}
-            style={{ flex: 1, padding: "10px 14px", borderRadius: "8px", border: "1px solid #E5E7EB", fontSize: "14px", background: "#F9FAFB" }}
-          >
-            <option value="">Select Subject</option>
-            {subjects.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
-          </select>
-          <button
-            onClick={() => handleFetchReport(reportSubjectId)}
-            disabled={reportLoading}
-            className="primary-btn"
-            style={{ padding: "10px 20px", margin: 0 }}
-          >
-            {reportLoading ? "Loading..." : "View Report"}
-          </button>
-        </div>
-
-        {report && (
-          <div>
-            <p style={{ fontSize: "14px", marginBottom: "12px" }}>
-              <strong>{report.subjectName}</strong> — {report.totalWindows} session(s) held
-            </p>
-            {report.report.length === 0 && (
-              <p style={{ fontSize: "14px", color: "var(--text-muted)" }}>No sessions recorded yet.</p>
-            )}
-            {report.report.map((w, i) => (
-              <div key={w.windowId} style={{ border: "1px solid #E5E7EB", borderRadius: "10px", marginBottom: "12px", overflow: "hidden" }}>
+        </>
+      )}
+          
+      {/* ── CONDITIONAL RENDER: HISTORICAL ATTENDANCE REPORT ── */}
+      {activeTab === "report" && (
+        <section className="stat-card" style={{ borderLeft: "6px solid var(--primary)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", flexWrap: "wrap", gap: "10px" }}>
+              <h4 style={{ margin: 0, fontSize: "20px", fontWeight: "700", color: "var(--primary)" }}>📋 Historical Attendance Report</h4>
+              {report && (
                 <button
-                  onClick={() => setExpandedWindow(expandedWindow === w.windowId ? null : w.windowId)}
-                  style={{
-                    width: "100%", display: "flex", justifyContent: "space-between",
-                    alignItems: "center", padding: "14px 18px",
-                    background: "#F9FAFB", border: "none", cursor: "pointer",
-                    fontSize: "14px", fontWeight: "600", color: "var(--text-main)",
-                  }}
+                  onClick={() => exportToExcel(report, report.subjectName)}
+                  className="primary-btn"
+                  style={{ display: "flex", alignItems: "center", gap: "6px", padding: "10px 16px", backgroundColor: "var(--success)", margin: 0, width: "auto" }}
                 >
-                  <span>
-                    Session {report.totalWindows - i} &nbsp;·&nbsp;{" "}
-                    {new Date(w.startTime).toLocaleString()} → {new Date(w.endTime).toLocaleTimeString()}
-                  </span>
-                  <span style={{
-                    backgroundColor: w.count > 0 ? "rgba(16,185,129,0.12)" : "rgba(239,68,68,0.1)",
-                    color: w.count > 0 ? "var(--secondary)" : "var(--error)",
-                    borderRadius: "20px", padding: "3px 10px", fontSize: "12px",
-                  }}>
-                    {w.count} present &nbsp;{expandedWindow === w.windowId ? "▲" : "▼"}
-                  </span>
+                  ⬇ Export to Excel
                 </button>
+              )}
+            </div>
+            <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: 0, marginBottom: "20px" }}>
+              Select a subject to see confirmed attendance records per session.
+            </p>
 
-                {expandedWindow === w.windowId && (
-                  <div style={{ padding: "14px 18px", borderTop: "1px solid #E5E7EB", overflowX: "auto" }}>
-                    {w.attendees.length === 0 ? (
-                      <p style={{ margin: 0, fontSize: "13px", color: "var(--text-muted)" }}>
-                        No confirmed attendance for this session.
-                      </p>
-                    ) : (
-                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", minWidth: "500px" }}>
-                        <thead>
-                          <tr style={{ color: "var(--text-muted)", textAlign: "left" }}>
-                            <th style={{ paddingBottom: "8px", fontWeight: "600" }}>#</th>
-                            <th style={{ paddingBottom: "8px", fontWeight: "600" }}>Name</th>
-                            <th style={{ paddingBottom: "8px", fontWeight: "600" }}>Email</th>
-                            <th style={{ paddingBottom: "8px", fontWeight: "600" }}>Match</th>
-                            <th style={{ paddingBottom: "8px", fontWeight: "600" }}>Reviewed At</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {w.attendees.map((a, idx) => {
-                            const c = confidenceLabel(a.confidence);
-                            return (
-                              <tr key={idx} style={{ borderTop: "1px solid #F3F4F6" }}>
-                                <td style={{ padding: "8px 0", color: "var(--text-muted)" }}>{idx + 1}</td>
-                                <td style={{ padding: "8px 0", fontWeight: "500" }}>{a.name}</td>
-                                <td style={{ padding: "8px 0", color: "var(--text-muted)" }}>{a.email}</td>
-                                <td style={{ padding: "8px 4px" }}>
-                                  <span style={{
-                                    color: c.color, fontWeight: "600", fontSize: "12px",
-                                    backgroundColor: c.color + "18", padding: "2px 8px", borderRadius: "12px",
-                                  }}>
-                                    {c.label} ({c.pct}%)
-                                  </span>
-                                </td>
-                                <td style={{ padding: "8px 0", color: "var(--text-muted)" }}>
-                                  {a.reviewedAt ? new Date(a.reviewedAt).toLocaleTimeString() : "—"}
-                                </td>
+            <div style={{ display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap" }}>
+              <select value={reportSubjectId} onChange={(e) => setReportSubjectId(e.target.value)} className="custom-select" style={{ flex: 1 }}>
+                <option value="" disabled>Select Subject</option>
+                {subjects.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
+              </select>
+              <button onClick={() => handleFetchReport(reportSubjectId)} disabled={reportLoading} className="primary-btn pulse-btn" style={{ padding: "14px 24px", margin: 0, width: "auto" }}>
+                {reportLoading ? "Loading..." : "View Report"}
+              </button>
+            </div>
+
+            {report && (
+              <div>
+                <p style={{ fontSize: "15px", marginBottom: "15px", fontWeight: "600", color: "var(--primary)" }}>
+                  {report.subjectName} — {report.totalWindows} session(s) held
+                </p>
+                {report.report.length === 0 && (
+                  <p style={{ fontSize: "14px", color: "var(--text-muted)" }}>No sessions recorded yet.</p>
+                )}
+                {report.report.map((w, i) => (
+                  <div key={w.windowId} style={{ border: "1px solid rgba(0,0,0,0.05)", borderRadius: "12px", marginBottom: "12px", overflow: "hidden" }}>
+                    <button
+                      onClick={() => setExpandedWindow(expandedWindow === w.windowId ? null : w.windowId)}
+                      style={{
+                        width: "100%", display: "flex", justifyContent: "space-between",
+                        alignItems: "center", padding: "16px 20px", background: "var(--card-bg)", border: "none", cursor: "pointer",
+                        fontSize: "15px", fontWeight: "600", color: "var(--primary)",
+                      }}
+                    >
+                      <span>
+                        Session {report.totalWindows - i} &nbsp;·&nbsp;{" "}
+                        {new Date(w.startTime).toLocaleString()} → {new Date(w.endTime).toLocaleTimeString()}
+                      </span>
+                      <span style={{ backgroundColor: w.count > 0 ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.1)", color: w.count > 0 ? "var(--success)" : "var(--error)", borderRadius: "20px", padding: "4px 12px", fontSize: "12px", fontWeight: "700" }}>
+                        {w.count} present &nbsp;{expandedWindow === w.windowId ? "▲" : "▼"}
+                      </span>
+                    </button>
+
+                    {expandedWindow === w.windowId && (
+                      <div style={{ padding: "16px 20px", borderTop: "1px solid rgba(0,0,0,0.05)", overflowX: "auto" }}>
+                        {w.attendees.length === 0 ? (
+                          <p style={{ margin: 0, fontSize: "14px", color: "var(--text-muted)" }}>No confirmed attendance for this session.</p>
+                        ) : (
+                          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px", minWidth: "500px" }}>
+                            <thead>
+                              <tr style={{ color: "var(--secondary)", textAlign: "left" }}>
+                                <th style={{ paddingBottom: "12px", fontWeight: "600" }}>#</th>
+                                <th style={{ paddingBottom: "12px", fontWeight: "600" }}>Name</th>
+                                <th style={{ paddingBottom: "12px", fontWeight: "600" }}>Email</th>
+                                <th style={{ paddingBottom: "12px", fontWeight: "600" }}>Match Conf.</th>
+                                <th style={{ paddingBottom: "12px", fontWeight: "600" }}>Reviewed At</th>
                               </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
+                            </thead>
+                            <tbody>
+                              {w.attendees.map((a, idx) => {
+                                const c = confidenceLabel(a.confidence);
+                                return (
+                                  <tr key={idx} style={{ borderTop: "1px solid rgba(0,0,0,0.05)" }}>
+                                    <td style={{ padding: "12px 0", color: "var(--text-muted)" }}>{idx + 1}</td>
+                                    <td style={{ padding: "12px 0", fontWeight: "600", color: "var(--primary)" }}>{a.name}</td>
+                                    <td style={{ padding: "12px 0", color: "var(--text-muted)" }}>{a.email}</td>
+                                    <td style={{ padding: "12px 4px" }}>
+                                      <span style={{ color: c.color, fontWeight: "700", fontSize: "12px", backgroundColor: c.color + "18", padding: "4px 10px", borderRadius: "12px" }}>
+                                        {c.label} ({c.pct}%)
+                                      </span>
+                                    </td>
+                                    <td style={{ padding: "12px 0", color: "var(--text-muted)" }}>{a.reviewedAt ? new Date(a.reviewedAt).toLocaleTimeString() : "—"}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
                     )}
                   </div>
-                )}
+                ))}
               </div>
-            ))}
-          </div>
-        )}
-      </section>
+            )}
+          </section>
+      )}
     </div>
   );
 };

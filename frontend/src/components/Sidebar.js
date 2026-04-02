@@ -1,66 +1,142 @@
-import React, { useState, useContext } from "react";
+import React, { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "./Toast";
+import { useNavigate, useLocation } from "react-router-dom";
+
+const Icons = {
+  Dashboard: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1"/>
+      <rect x="14" y="3" width="7" height="7" rx="1"/>
+      <rect x="14" y="14" width="7" height="7" rx="1"/>
+      <rect x="3" y="14" width="7" height="7" rx="1"/>
+    </svg>
+  ),
+  Profile: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+      <circle cx="12" cy="7" r="4"/>
+    </svg>
+  ),
+  Logs: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+    </svg>
+  ),
+  Settings: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+  ),
+  LogOut: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+      <polyline points="10 17 15 12 10 7"/>
+      <line x1="15" y1="12" x2="3" y2="12"/>
+    </svg>
+  )
+};
 
 const Sidebar = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
-
-  const toggleSidebar = () => setIsOpen(!isOpen);
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
+  const isActive = (path) => location.pathname === path ? "active" : "";
+
   return (
     <>
-      {/* HAMBURGER ICON */}
-      <div className={`hamburger ${isOpen ? "open" : ""}`} onClick={toggleSidebar} style={{ position: "fixed", top: "20px", left: "20px" }}>
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-
-      {/* OVERLAY */}
-      <div className={`sidebar-overlay ${isOpen ? "visible" : ""}`} onClick={toggleSidebar}></div>
-
-      {/* SIDEBAR CONTENT */}
-      <div className={`sidebar ${isOpen ? "open" : ""}`}>
-        <div className="sidebar-logo">FaceAT</div>
-        
-        <div className="nav-item active" onClick={() => { navigate("/dashboard"); toggleSidebar(); }}>
-          Dashboard
+      {/* DESKTOP SIDEBAR */}
+      <aside className="sidebar">
+        <div style={{ marginBottom: "50px", display: "flex", alignItems: "center", gap: "10px", color: "var(--primary)" }}>
+          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(58,31,43,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+             <Icons.Dashboard />
+          </div>
+          <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "700", letterSpacing: "-0.5px" }}>FaceAT</h2>
         </div>
         
-        <div className="nav-item" onClick={() => { navigate("/profile"); toggleSidebar(); }}>
-          My Profile
-        </div>
+        <nav style={{ display: "flex", flexDirection: "column", gap: "10px", flex: 1 }}>
+          <div 
+            style={{ 
+              padding: "16px 20px", borderRadius: "16px", cursor: "pointer", 
+              background: isActive("/dashboard") ? "var(--primary)" : "transparent",
+              color: isActive("/dashboard") ? "white" : "var(--secondary)",
+              fontWeight: "600", display: "flex", alignItems: "center", gap: "12px", transition: "0.2s"
+            }} 
+            onClick={() => navigate("/dashboard")}
+          >
+            <Icons.Dashboard /> Dashboard
+          </div>
+          
+          {user?.role === "student" && (
+            <div 
+              style={{ 
+                padding: "16px 20px", borderRadius: "16px", cursor: "pointer", 
+                background: isActive("/analytics") ? "var(--primary)" : "transparent",
+                color: isActive("/analytics") ? "white" : "var(--secondary)",
+                fontWeight: "600", display: "flex", alignItems: "center", gap: "12px", transition: "0.2s"
+              }} 
+              onClick={() => navigate("/analytics")}
+            >
+              <Icons.Logs /> Analytics
+            </div>
+          )}
 
-        {user.role === "teacher" && (
-           <div className="nav-item" onClick={() => { navigate("/dashboard"); toggleSidebar(); }}>
-             Manage Subjects
-           </div>
+          <div 
+            style={{ 
+              padding: "16px 20px", borderRadius: "16px", cursor: "pointer", 
+              background: isActive("/profile") ? "var(--primary)" : "transparent",
+              color: isActive("/profile") ? "white" : "var(--secondary)",
+              fontWeight: "600", display: "flex", alignItems: "center", gap: "12px", transition: "0.2s"
+            }} 
+            onClick={() => navigate("/profile")}
+          >
+            <Icons.Profile /> Profile
+          </div>
+        </nav>
+
+        <div style={{ marginTop: "auto", borderTop: "1px solid rgba(0,0,0,0.05)", paddingTop: "20px" }}>
+          <div 
+            style={{ 
+              padding: "16px 20px", borderRadius: "16px", cursor: "pointer", 
+              color: "var(--error)", fontWeight: "600", display: "flex", alignItems: "center", gap: "12px"
+            }} 
+            onClick={handleLogout}
+          >
+            <Icons.LogOut /> Logout
+          </div>
+        </div>
+      </aside>
+
+      {/* MOBILE BOTTOM NAV */}
+      <nav className="bottom-nav">
+        <div className={`bottom-nav-item ${isActive("/dashboard")}`} onClick={() => navigate("/dashboard")}>
+          <Icons.Dashboard />
+          <span>Dashboard</span>
+        </div>
+        
+        {user?.role === "student" && (
+          <div className={`bottom-nav-item ${isActive("/analytics")}`} onClick={() => navigate("/analytics")}>
+            <Icons.Logs />
+            <span>Logs</span>
+          </div>
         )}
 
-        {user.role === "student" && (
-           <div className="nav-item" onClick={() => { navigate("/analytics"); toggleSidebar(); }}>
-             My Attendance Analytics
-           </div>
-        )}
-
-        <div className="nav-item logout-nav" onClick={handleLogout}>
-          Logout
+        <div className={`bottom-nav-item ${isActive("/profile")}`} onClick={() => navigate("/profile")}>
+          <Icons.Profile />
+          <span>Profile</span>
         </div>
 
-        <div style={{ marginTop: "20px", borderTop: "1px solid #eee", paddingTop: "20px" }}>
-            <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: 0 }}>Logged in as:</p>
-            <p style={{ fontSize: "14px", fontWeight: "600", margin: 0 }}>{user.name}</p>
-            <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: 0 }}>{user.email}</p>
+        <div className="bottom-nav-item" onClick={handleLogout} style={{color: "var(--error)"}}>
+          <Icons.LogOut />
+          <span>Logout</span>
         </div>
-      </div>
+      </nav>
     </>
   );
 };

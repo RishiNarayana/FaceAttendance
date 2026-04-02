@@ -4,7 +4,6 @@ import AuthProvider, { AuthContext } from "./context/AuthContext";
 import ToastProvider from "./components/Toast";
 import Login from "./components/Login";
 import Register from "./components/Register";
-import TeacherRegister from "./components/TeacherRegister";
 import Dashboard from "./components/Dashboard";
 import Profile from "./components/Profile";
 import StudentAnalytics from "./components/StudentAnalytics";
@@ -27,7 +26,6 @@ function App() {
             {/* Public */}
             <Route path="/login"            element={<Login />} />
             <Route path="/register"         element={<Register />} />
-            <Route path="/teacher-register" element={<TeacherRegister />} />
 
             {/* Protected — role-based dashboard (teacher vs student) */}
             <Route
