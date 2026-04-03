@@ -17,11 +17,24 @@ exports.getMySubjects = async (req, res) => {
         startTime: { $lte: new Date() },
         endTime: { $gte: new Date() }
       });
+      
+      let attendanceStatus = null;
+      if (window) {
+        const attendance = await Attendance.findOne({
+          attendanceWindow: window._id,
+          student: req.user._id
+        });
+        if (attendance) {
+          attendanceStatus = attendance.status;
+        }
+      }
+
       return {
         ...s._doc,
         activeWindow: window ? true : false,
         windowId: window ? window._id : null,
-        faceRegistered: hasFaceRegistered
+        faceRegistered: hasFaceRegistered,
+        attendanceStatus
       };
     }));
 

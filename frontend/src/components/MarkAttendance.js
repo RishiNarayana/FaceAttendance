@@ -229,8 +229,9 @@ const MarkAttendance = ({ subjectId, windowId, onComplete, onCancel }) => {
             muted
             playsInline
             width="100%"
-            height="200"
             style={{
+              aspectRatio: "1/1",
+              maxHeight: "450px",
               backgroundColor: "#000",
               borderRadius: "12px",
               objectFit: "cover",

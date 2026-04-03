@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -34,6 +34,13 @@ const Icons = {
       <polyline points="10 17 15 12 10 7"/>
       <line x1="15" y1="12" x2="3" y2="12"/>
     </svg>
+  ),
+  Menu: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
   )
 };
 
@@ -41,6 +48,20 @@ const Sidebar = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 900) {
+        setIsCollapsed(true);
+      } else {
+        setIsCollapsed(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -52,63 +73,74 @@ const Sidebar = () => {
   return (
     <>
       {/* DESKTOP SIDEBAR */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
         <div style={{ marginBottom: "50px", display: "flex", alignItems: "center", gap: "10px", color: "var(--primary)" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(58,31,43,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-             <Icons.Dashboard />
-          </div>
-          <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "700", letterSpacing: "-0.5px" }}>FaceAT</h2>
+          <button className="sidebar-toggle-btn" onClick={() => setIsCollapsed(!isCollapsed)} style={{ margin: 0 }}>
+            <Icons.Menu />
+          </button>
+          {!isCollapsed && (
+            <>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(58,31,43,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                 <Icons.Dashboard />
+              </div>
+              <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "700", letterSpacing: "-0.5px" }}>FaceAT</h2>
+            </>
+          )}
         </div>
         
         <nav style={{ display: "flex", flexDirection: "column", gap: "10px", flex: 1 }}>
           <div 
             style={{ 
-              padding: "16px 20px", borderRadius: "16px", cursor: "pointer", 
+              padding: "16px", borderRadius: "16px", cursor: "pointer", 
               background: isActive("/dashboard") ? "var(--primary)" : "transparent",
               color: isActive("/dashboard") ? "white" : "var(--secondary)",
-              fontWeight: "600", display: "flex", alignItems: "center", gap: "12px", transition: "0.2s"
+              fontWeight: "600", display: "flex", alignItems: "center", gap: "12px", transition: "0.2s",
+              justifyContent: isCollapsed ? "center" : "flex-start"
             }} 
             onClick={() => navigate("/dashboard")}
           >
-            <Icons.Dashboard /> Dashboard
+            <Icons.Dashboard /> {!isCollapsed && <span>Dashboard</span>}
           </div>
           
           {user?.role === "student" && (
             <div 
               style={{ 
-                padding: "16px 20px", borderRadius: "16px", cursor: "pointer", 
+                padding: "16px", borderRadius: "16px", cursor: "pointer", 
                 background: isActive("/analytics") ? "var(--primary)" : "transparent",
                 color: isActive("/analytics") ? "white" : "var(--secondary)",
-                fontWeight: "600", display: "flex", alignItems: "center", gap: "12px", transition: "0.2s"
+                fontWeight: "600", display: "flex", alignItems: "center", gap: "12px", transition: "0.2s",
+                justifyContent: isCollapsed ? "center" : "flex-start"
               }} 
               onClick={() => navigate("/analytics")}
             >
-              <Icons.Logs /> Analytics
+              <Icons.Logs /> {!isCollapsed && <span>Analytics</span>}
             </div>
           )}
 
           <div 
             style={{ 
-              padding: "16px 20px", borderRadius: "16px", cursor: "pointer", 
+              padding: "16px", borderRadius: "16px", cursor: "pointer", 
               background: isActive("/profile") ? "var(--primary)" : "transparent",
               color: isActive("/profile") ? "white" : "var(--secondary)",
-              fontWeight: "600", display: "flex", alignItems: "center", gap: "12px", transition: "0.2s"
+              fontWeight: "600", display: "flex", alignItems: "center", gap: "12px", transition: "0.2s",
+              justifyContent: isCollapsed ? "center" : "flex-start"
             }} 
             onClick={() => navigate("/profile")}
           >
-            <Icons.Profile /> Profile
+            <Icons.Profile /> {!isCollapsed && <span>Profile</span>}
           </div>
         </nav>
 
         <div style={{ marginTop: "auto", borderTop: "1px solid rgba(0,0,0,0.05)", paddingTop: "20px" }}>
           <div 
             style={{ 
-              padding: "16px 20px", borderRadius: "16px", cursor: "pointer", 
-              color: "var(--error)", fontWeight: "600", display: "flex", alignItems: "center", gap: "12px"
+              padding: "16px", borderRadius: "16px", cursor: "pointer", 
+              color: "var(--error)", fontWeight: "600", display: "flex", alignItems: "center", gap: "12px",
+              justifyContent: isCollapsed ? "center" : "flex-start"
             }} 
             onClick={handleLogout}
           >
-            <Icons.LogOut /> Logout
+            <Icons.LogOut /> {!isCollapsed && <span>Logout</span>}
           </div>
         </div>
       </aside>

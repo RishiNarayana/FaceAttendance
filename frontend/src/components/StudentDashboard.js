@@ -112,12 +112,12 @@ const StudentDashboard = () => {
               key={s._id}
               className="stat-card"
               style={{
-                borderLeft: s.activeWindow ? "6px solid var(--success)" : "6px solid var(--primary)",
+                borderLeft: s.activeWindow && !s.attendanceStatus ? "6px solid var(--success)" : "6px solid var(--primary)",
                 padding: "24px",
                 position: "relative",
               }}
             >
-               {s.activeWindow && (
+               {s.activeWindow && !s.attendanceStatus && (
                   <div style={{ position: "absolute", top: "24px", right: "24px" }}>
                     <span style={{
                       backgroundColor: "rgba(16,185,129,0.15)", color: "var(--success)",
@@ -128,7 +128,7 @@ const StudentDashboard = () => {
                     </span>
                   </div>
                 )}
-              <h3 style={{ margin: "0 0 8px 0", color: "var(--primary)", fontSize: "22px", fontWeight: "700", paddingRight: s.activeWindow ? "120px" : "0" }}>
+              <h3 style={{ margin: "0 0 8px 0", color: "var(--primary)", fontSize: "22px", fontWeight: "700", paddingRight: s.activeWindow && !s.attendanceStatus ? "120px" : "0" }}>
                 {s.name}
               </h3>
               <p style={{ margin: "0 0 20px 0", fontSize: "15px", color: "var(--text-muted)", fontWeight: "500" }}>
@@ -137,13 +137,21 @@ const StudentDashboard = () => {
 
               <div style={{ 
                 padding: "16px 20px", 
-                backgroundColor: s.activeWindow ? "rgba(16,185,129,0.05)" : "var(--card-bg)", 
+                backgroundColor: s.activeWindow && !s.attendanceStatus ? "rgba(16,185,129,0.05)" : "var(--card-bg)", 
                 borderRadius: "14px", 
                 marginBottom: "20px",
-                border: s.activeWindow ? "1px solid rgba(16,185,129,0.2)" : "1px solid transparent"
+                border: s.activeWindow && !s.attendanceStatus ? "1px solid rgba(16,185,129,0.2)" : "1px solid transparent"
               }}>
-                <p style={{ margin: 0, fontSize: "14px", color: s.activeWindow ? "var(--success)" : "var(--text-muted)", fontWeight: s.activeWindow ? "600" : "500", lineHeight: "1.5" }}>
-                  {s.activeWindow ? "An attendance window is currently open. Tap below to securely mark your presence." : "No active attendance session right now. Check back later."}
+                <p style={{ margin: 0, fontSize: "14px", color: s.activeWindow && !s.attendanceStatus ? "var(--success)" : "var(--text-muted)", fontWeight: s.activeWindow && !s.attendanceStatus ? "600" : "500", lineHeight: "1.5" }}>
+                  {s.activeWindow && !s.attendanceStatus 
+                    ? "An attendance window is currently open. Tap below to securely mark your presence." 
+                    : s.attendanceStatus === "pending" 
+                      ? "Attendance submitted. Waiting for teacher approval."
+                      : s.attendanceStatus === "present"
+                        ? "Teacher has approved your attendance for this session. ✅"
+                        : s.attendanceStatus === "absent" || s.attendanceStatus === "rejected"
+                          ? "Your attendance was rejected/marked absent for this session. ❌"
+                          : "No active attendance session right now. Check back later."}
                 </p>
               </div>
 
@@ -172,17 +180,23 @@ const StudentDashboard = () => {
               {activeVerSubject !== s._id && s.faceRegistered && (
                 <button
                   className="primary-btn"
-                  disabled={!s.activeWindow}
+                  disabled={!s.activeWindow || s.attendanceStatus}
                   onClick={() => { setActiveVerSubject(s._id); setActiveRegSubject(null); }}
                   style={{ 
                     padding: "16px", 
-                    backgroundColor: s.activeWindow ? "var(--success)" : "var(--secondary)",
-                    opacity: s.activeWindow ? 1 : 0.5,
+                    backgroundColor: s.activeWindow && !s.attendanceStatus ? "var(--success)" : "var(--secondary)",
+                    opacity: s.activeWindow && !s.attendanceStatus ? 1 : 0.5,
                     fontSize: "16px"
                   }}
                 >
                   <Icons.Check />
-                  {s.activeWindow ? "Check-In via Face ID" : "Session Closed"}
+                  {s.activeWindow && !s.attendanceStatus 
+                    ? "Check-In via Face ID" 
+                    : s.attendanceStatus === "pending" 
+                      ? "Under Review..."
+                      : s.attendanceStatus 
+                        ? "Session Closed (Resolved)"
+                        : "Session Closed"}
                 </button>
               )}
 

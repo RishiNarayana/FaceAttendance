@@ -412,6 +412,32 @@ select.custom-select:focus {
   padding: 30px;
   display: flex;
   flex-direction: column;
+  transition: width 0.3s ease, padding 0.3s ease;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.sidebar.collapsed {
+  width: 80px;
+  padding: 30px 15px;
+}
+
+.sidebar-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.sidebar-toggle-btn:hover {
+  background: rgba(58, 31, 43, 0.05);
 }
 
 .main-content {
@@ -419,11 +445,23 @@ select.custom-select:focus {
   padding: 40px;
   max-width: 1200px;
   margin: 0 auto;
+  transition: padding 0.3s ease;
 }
 
 @media (max-width: 900px) {
   .sidebar {
-    display: none;
+    width: 70px;
+    padding: 20px 10px;
+  }
+  .sidebar.collapsed {
+    width: 70px;
+    padding: 20px 10px;
+  }
+  .bottom-nav {
+    display: none !important;
+  }
+  .with-bottom-nav {
+    padding-bottom: 0 !important;
   }
   .main-content {
     padding: 20px;
