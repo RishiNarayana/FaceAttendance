@@ -92,15 +92,32 @@ exports.markAttendance = async (req, res) => {
 
     // --- 6. Compare submitted embedding vs stored embedding ---
     const THRESHOLD = 0.6; // face-api.js default; lower = stricter
+    // MIN_CONFIDENCE_DISTANCE = 0.36 ↔ exactly 40% confidence:
+    //   pct = (1 - dist/0.6)*100  →  40 = (1 - 0.36/0.6)*100  ✓
+    const MIN_CONFIDENCE_DISTANCE = 0.36;
     const distance = euclideanDistance(embedding, faceRecord.embeddingVector);
 
+    // Hard fail — face doesn't match at all
     if (distance > THRESHOLD) {
       return res.status(401).json({
         msg: `Face verification failed (distance: ${distance.toFixed(3)}). Please try again in better lighting.`,
       });
     }
 
-    // --- 7. Save PENDING attendance record (teacher must approve/reject) ---
+    const confidencePct = Math.round((1 - distance / THRESHOLD) * 100);
+
+    // Soft fail — face matched but confidence is below 40%
+    // Discard automatically without creating any DB record
+    if (distance > MIN_CONFIDENCE_DISTANCE) {
+      return res.status(422).json({
+        msg: `Face detected but confidence is too low (${confidencePct}%). Ensure good lighting and look directly at the camera, then try again.`,
+        confidence: parseFloat(distance.toFixed(3)),
+        confidencePct,
+        lowConfidence: true,
+      });
+    }
+
+    // --- 7. Confidence >= 40% — Save PENDING record for teacher review ---
     await Attendance.create({
       student: studentId,
       subject: subjectId,
@@ -113,6 +130,7 @@ exports.markAttendance = async (req, res) => {
     res.json({
       msg: "✅ Face verified! Your attendance is pending teacher approval.",
       confidence: parseFloat(distance.toFixed(3)),
+      confidencePct,
     });
   } catch (err) {
     console.error("markAttendance error:", err);

@@ -202,8 +202,9 @@ const StudentDashboard = () => {
 
               {activeVerSubject === s._id && s.activeWindow && (
                 <div style={{ marginTop: "15px", padding: "20px", background: "var(--card-bg)", borderRadius: "16px" }}>
-                  <MarkAttendance
+                <MarkAttendance
                     subjectId={s._id}
+                    subjectName={s.name}
                     windowId={s.windowId}
                     onComplete={() => { setActiveVerSubject(null); fetchData(); }}
                     onCancel={() => setActiveVerSubject(null)}

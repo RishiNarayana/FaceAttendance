@@ -21,7 +21,7 @@ exports.getMySubjects = async (req, res) => {
       let attendanceStatus = null;
       if (window) {
         const attendance = await Attendance.findOne({
-          attendanceWindow: window._id,
+          window: window._id,
           student: req.user._id
         });
         if (attendance) {
@@ -68,6 +68,34 @@ exports.getAnalytics = async (req, res) => {
     }));
 
     res.json(stats);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// GET /api/student/attendance-history
+// Returns the last 15 attendance records for this student (newest first)
+exports.getAttendanceHistory = async (req, res) => {
+  try {
+    const records = await Attendance.find({ student: req.user._id })
+      .sort({ createdAt: -1 })
+      .limit(15)
+      .populate("subject", "name")
+      .populate("window", "startTime endTime");
+
+    const history = records.map((r) => ({
+      _id: r._id,
+      subjectName: r.subject?.name || "Unknown",
+      status: r.status,
+      confidence: r.confidence,
+      livenessVerified: r.livenessVerified,
+      markedAt: r.createdAt,
+      sessionStart: r.window?.startTime,
+      sessionEnd: r.window?.endTime,
+      teacherReviewedAt: r.teacherReviewedAt || null,
+    }));
+
+    res.json(history);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

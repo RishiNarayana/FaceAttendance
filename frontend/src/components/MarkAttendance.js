@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import api from "../api";
 import * as faceapi from "face-api.js";
 import { useToast } from "./Toast";
+import AttendanceSuccessModal from "./AttendanceSuccessModal";
 
 // ─── Eye Aspect Ratio (liveness) ─────────────────────────────────────────────
 // Six landmark points per eye (indices within the full 68-pt array)
@@ -20,17 +21,19 @@ const eyeAspectRatio = (pts, indices) => {
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
-const MarkAttendance = ({ subjectId, windowId, onComplete, onCancel }) => {
+const MarkAttendance = ({ subjectId, subjectName, windowId, onComplete, onCancel }) => {
   const toast = useToast();
   const videoRef = useRef(null);
   const loopRef  = useRef(null);   // setInterval handle for blink loop
   const closedFramesRef = useRef(0);
   const blinkDetectedRef = useRef(false);
 
-  const [phase, setPhase] = useState("loading"); // loading | ready | blinking | capturing | done
+  const [phase, setPhase] = useState("loading"); // loading | ready | blinking | capturing | done | lowConfidence
   const [loadingMsg, setLoadingMsg] = useState("Loading AI models…");
   const [blinkMsg, setBlinkMsg] = useState("👁  Please blink once to verify you're live");
   const [earValue, setEarValue] = useState(null);
+  const [successData, setSuccessData] = useState(null); // { confidence } after marking
+  const [lowConfidenceData, setLowConfidenceData] = useState(null); // { msg, confidencePct } on soft fail
 
   // ── 1. Load models ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -149,37 +152,162 @@ const MarkAttendance = ({ subjectId, windowId, onComplete, onCancel }) => {
       });
 
       stopCamera();
+      setSuccessData({ confidence: res.data?.confidence ?? null });
       setPhase("done");
       toast.success(res.data?.msg || "Attendance submitted for teacher approval!");
-      if (onComplete) onComplete();
     } catch (err) {
       console.error(err);
-      toast.error("Verification failed: " + (err.response?.data?.msg || err.message));
-      setPhase("ready");
+      const errData = err.response?.data;
+
+      if (errData?.lowConfidence) {
+        // Soft fail — face detected but confidence < 40%. Let student retry.
+        setLowConfidenceData({
+          msg: errData.msg,
+          confidencePct: errData.confidencePct ?? 0,
+        });
+        setPhase("lowConfidence");
+      } else {
+        // Hard fail — face didn't match at all, or server error
+        toast.error("Verification failed: " + (errData?.msg || err.message));
+        setPhase("ready");
+      }
     }
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
-  if (phase === "done") {
+
+  // ── Low-confidence retry screen ───────────────────────────────────────────
+  if (phase === "lowConfidence" && lowConfidenceData) {
+    const pct = lowConfidenceData.confidencePct;
     return (
       <div
         style={{
           marginTop: "15px",
-          padding: "20px",
-          backgroundColor: "rgba(16,185,129,0.08)",
-          border: "1px solid rgba(16,185,129,0.3)",
-          borderRadius: "10px",
+          padding: "24px",
+          backgroundColor: "rgba(245,158,11,0.07)",
+          border: "2px solid rgba(245,158,11,0.35)",
+          borderRadius: "14px",
           textAlign: "center",
         }}
       >
-        <div style={{ fontSize: "36px", marginBottom: "8px" }}>⏳</div>
-        <p style={{ margin: 0, fontWeight: "600", color: "var(--secondary)" }}>
-          Submitted for Teacher Approval
+        {/* Icon */}
+        <div style={{ fontSize: "44px", marginBottom: "10px" }}>⚠️</div>
+
+        <p style={{ margin: "0 0 6px", fontWeight: "700", fontSize: "17px", color: "#92400E" }}>
+          Confidence Too Low
         </p>
-        <p style={{ margin: "6px 0 0", fontSize: "13px", color: "var(--text-muted)" }}>
-          Your face and liveness were verified. Wait for your teacher to confirm attendance.
+
+        {/* Confidence bar */}
+        <div style={{ margin: "14px auto", maxWidth: "260px" }}>
+          <div style={{
+            display: "flex", justifyContent: "space-between",
+            fontSize: "12px", color: "#78350F", fontWeight: "700", marginBottom: "6px",
+          }}>
+            <span>Your score: {pct}%</span>
+            <span>Required: ≥40%</span>
+          </div>
+          <div style={{
+            height: "10px", borderRadius: "6px",
+            background: "rgba(0,0,0,0.08)", overflow: "hidden",
+          }}>
+            <div style={{
+              height: "100%", width: `${Math.min(pct, 100)}%`,
+              background: pct < 20 ? "#EF4444" : "#F59E0B",
+              borderRadius: "6px",
+              transition: "width 0.6s ease",
+            }} />
+          </div>
+          {/* 40% marker */}
+          <div style={{ position: "relative", height: "14px" }}>
+            <div style={{
+              position: "absolute", left: "40%",
+              top: "0", bottom: "0",
+              borderLeft: "2px dashed #10B981",
+              transform: "translateX(-50%)",
+            }} />
+            <span style={{
+              position: "absolute", left: "40%",
+              transform: "translateX(-50%)",
+              fontSize: "9px", color: "#10B981", fontWeight: "800",
+              whiteSpace: "nowrap", top: "2px",
+            }}>40% min</span>
+          </div>
+        </div>
+
+        <p style={{ margin: "0 0 18px", fontSize: "13px", color: "#78350F", lineHeight: 1.6 }}>
+          {lowConfidenceData.msg}
         </p>
+
+        <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
+          <button
+            onClick={() => {
+              setLowConfidenceData(null);
+              setPhase("ready");
+              startCamera();
+            }}
+            style={{
+              padding: "12px 28px",
+              background: "#F59E0B", color: "white",
+              border: "none", borderRadius: "10px",
+              fontWeight: "700", fontSize: "14px", cursor: "pointer",
+            }}
+          >
+            🔁 Try Again
+          </button>
+          <button
+            onClick={() => {
+              stopLoop(); stopCamera();
+              if (onCancel) onCancel();
+            }}
+            style={{
+              padding: "12px 24px",
+              background: "white", color: "#EF4444",
+              border: "1px solid #EF4444", borderRadius: "10px",
+              fontWeight: "700", fontSize: "14px", cursor: "pointer",
+            }}
+          >
+            Cancel
+          </button>
+        </div>
       </div>
+    );
+  }
+
+  if (phase === "done") {
+    return (
+      <>
+        {/* Inline confirmation card (visible behind modal) */}
+        <div
+          style={{
+            marginTop: "15px",
+            padding: "20px",
+            backgroundColor: "rgba(16,185,129,0.08)",
+            border: "1px solid rgba(16,185,129,0.3)",
+            borderRadius: "10px",
+            textAlign: "center",
+          }}
+        >
+          <div style={{ fontSize: "36px", marginBottom: "8px" }}>⏳</div>
+          <p style={{ margin: 0, fontWeight: "600", color: "var(--secondary)" }}>
+            Submitted for Teacher Approval
+          </p>
+          <p style={{ margin: "6px 0 0", fontSize: "13px", color: "var(--text-muted)" }}>
+            Your face and liveness were verified. Wait for your teacher to confirm attendance.
+          </p>
+        </div>
+
+        {/* Rich success modal with recent activity */}
+        {successData && (
+          <AttendanceSuccessModal
+            subjectName={subjectName}
+            confidence={successData.confidence}
+            onClose={() => {
+              setSuccessData(null);
+              if (onComplete) onComplete();
+            }}
+          />
+        )}
+      </>
     );
   }
 

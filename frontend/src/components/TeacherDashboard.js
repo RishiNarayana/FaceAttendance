@@ -337,9 +337,26 @@ const TeacherDashboard = () => {
                 </span>
               )}
             </div>
-            <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px", marginBottom: "20px" }}>
+            <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px", marginBottom: "12px" }}>
               Students have submitted face + liveness verified requests. Review and action them.
             </p>
+
+            {/* 40% confidence gate info banner */}
+            <div style={{
+              display: "flex", alignItems: "flex-start", gap: "10px",
+              padding: "12px 16px", marginBottom: "20px",
+              background: "rgba(245,158,11,0.08)",
+              border: "1px solid rgba(245,158,11,0.3)",
+              borderRadius: "10px", fontSize: "13px", color: "#78350F",
+            }}>
+              <span style={{ fontSize: "16px", flexShrink: 0 }}>🔒</span>
+              <span>
+                <strong>Auto-filter active:</strong> Only submissions with a face-match confidence of{" "}
+                <strong>≥ 40%</strong> reach this queue. Lower-confidence detections are automatically
+                discarded and the student is asked to retry — so every record here has already passed
+                the minimum quality bar.
+              </span>
+            </div>
 
             <div style={{ display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap", alignItems: "stretch" }}>
               <div style={{ flex: 1, minWidth: "180px", position: "relative" }}>
