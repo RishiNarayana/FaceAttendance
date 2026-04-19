@@ -133,6 +133,9 @@ exports.markAttendance = async (req, res) => {
       confidencePct,
     });
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ msg: "Attendance has already been recorded for this session" });
+    }
     console.error("markAttendance error:", err);
     res.status(500).json({ msg: "Server error during verification" });
   }

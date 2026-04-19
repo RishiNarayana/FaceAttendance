@@ -27,6 +27,8 @@ const MarkAttendance = ({ subjectId, subjectName, windowId, onComplete, onCancel
   const loopRef  = useRef(null);   // setInterval handle for blink loop
   const closedFramesRef = useRef(0);
   const blinkDetectedRef = useRef(false);
+  const submittingRef = useRef(false);
+  const processingRef = useRef(false);
 
   const [phase, setPhase] = useState("loading"); // loading | ready | blinking | capturing | done | lowConfidence
   const [loadingMsg, setLoadingMsg] = useState("Loading AI models…");
@@ -92,11 +94,13 @@ const MarkAttendance = ({ subjectId, subjectName, windowId, onComplete, onCancel
     closedFramesRef.current = 0;
 
     loopRef.current = setInterval(async () => {
-      if (blinkDetectedRef.current) return; // already caught a blink, wait for capture
+      if (blinkDetectedRef.current || processingRef.current) return;
+      processingRef.current = true;
 
-      const detected = await faceapi
-        .detectSingleFace(videoRef.current, new faceapi.SsdMobilenetv1Options())
-        .withFaceLandmarks();
+      try {
+        const detected = await faceapi
+          .detectSingleFace(videoRef.current, new faceapi.SsdMobilenetv1Options())
+          .withFaceLandmarks();
 
       if (!detected) {
         setBlinkMsg("⚠️ No face found — look straight at the camera");
@@ -125,11 +129,16 @@ const MarkAttendance = ({ subjectId, subjectName, windowId, onComplete, onCancel
           setBlinkMsg("👁  Please blink once to verify you're live");
         }
       }
+      } finally {
+        processingRef.current = false;
+      }
     }, 150);
   };
 
   // ── 3. Capture embedding and POST ─────────────────────────────────────────
   const captureAndSubmit = async () => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     try {
       const detection = await faceapi
         .detectSingleFace(videoRef.current)
@@ -171,6 +180,8 @@ const MarkAttendance = ({ subjectId, subjectName, windowId, onComplete, onCancel
         toast.error("Verification failed: " + (errData?.msg || err.message));
         setPhase("ready");
       }
+    } finally {
+      submittingRef.current = false;
     }
   };
 
