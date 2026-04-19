@@ -30,6 +30,41 @@ exports.createStudent = async (req, res) => {
   }
 };
 
+// Enroll an EXISTING student (identified by email) into a subject
+exports.enrollExistingStudent = async (req, res) => {
+  const { studentEmail, subjectId } = req.body;
+  try {
+    if (!studentEmail || !subjectId) {
+      return res.status(400).json({ message: "Student email and subject are required" });
+    }
+
+    const subject = await Subject.findById(subjectId);
+    if (!subject || subject.teacher.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to manage this subject" });
+    }
+
+    const student = await User.findOne({ email: studentEmail.trim().toLowerCase(), role: "student" });
+    if (!student) {
+      return res.status(404).json({ message: "No student account found with that email" });
+    }
+
+    if (subject.students.map(id => id.toString()).includes(student._id.toString())) {
+      return res.status(400).json({ message: "Student is already enrolled in this subject" });
+    }
+
+    subject.students.push(student._id);
+    await subject.save();
+
+    res.json({
+      message: `${student.name} has been enrolled in ${subject.name} successfully`,
+      student: { name: student.name, email: student.email, _id: student._id },
+      subject: { name: subject.name, _id: subject._id },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Get teacher's subjects
 exports.getMySubjects = async (req, res) => {
   try {

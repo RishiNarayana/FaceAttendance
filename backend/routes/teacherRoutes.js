@@ -3,6 +3,7 @@ const {
   getMySubjects,
   createSubject,
   addStudentsToSubject,
+  enrollExistingStudent,
   setAttendanceWindow,
   createStudent,
   getAttendanceReport,
@@ -19,6 +20,7 @@ router.use(authorize("teacher", "admin"));
 router.get("/my-subjects",                        getMySubjects);
 router.post("/create-subject",                    createSubject);
 router.post("/add-students",                      addStudentsToSubject);
+router.post("/enroll-student",                    enrollExistingStudent);
 router.post("/set-window",                        setAttendanceWindow);
 router.post("/create-student",                    createStudent);
 router.get("/attendance/:subjectId",              getAttendanceReport);

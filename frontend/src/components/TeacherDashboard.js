@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback, useRef } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import * as XLSX from "xlsx";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "./Toast";
@@ -74,14 +74,6 @@ const TeacherDashboard = () => {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
 
-  const passSuffixRef = useRef(
-    Math.random().toString(36).slice(-5).toUpperCase() + Math.floor(Math.random() * 99)
-  );
-  const [studentData, setStudentData] = useState({ name: "", email: "", password: "" });
-  const [studentSubject, setStudentSubject] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [createdStudent, setCreatedStudent] = useState(null);
-
   // Report state
   const [reportSubjectId, setReportSubjectId] = useState("");
   const [report, setReport] = useState(null);
@@ -93,19 +85,6 @@ const TeacherDashboard = () => {
   const [pendingRecords, setPendingRecords] = useState([]);
   const [pendingLoading, setPendingLoading] = useState(false);
   const [reviewingId, setReviewingId] = useState(null);
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-  const handleStudentFieldChange = (field, value) => {
-    let newPass = studentData.password;
-    if (field === "name" && value.trim().length > 0) {
-      const first = value.trim().split(" ")[0];
-      const pretty = first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
-      newPass = `${pretty}-${passSuffixRef.current}`;
-    } else if (field === "name" && value.trim().length === 0) {
-      newPass = "";
-    }
-    setStudentData({ ...studentData, [field]: value, password: newPass });
-  };
 
   // ── Data fetching ─────────────────────────────────────────────────────────
   const fetchSubjects = useCallback(async () => {
@@ -153,27 +132,7 @@ const TeacherDashboard = () => {
     }
   };
 
-  const handleCreateStudent = async (e) => {
-    e.preventDefault();
-    try {
-      await api.post("/teacher/create-student", studentData);
-      if (studentSubject) {
-        await api.post("/teacher/add-students", { subjectId: studentSubject, studentEmail: studentData.email });
-      }
-      setCreatedStudent({
-        ...studentData,
-        subject: subjects.find((s) => s._id === studentSubject)?.name || "Not Enrolled",
-      });
-      setShowModal(true);
-      setStudentData({ name: "", email: "", password: "" });
-      setStudentSubject("");
-      passSuffixRef.current =
-        Math.random().toString(36).slice(-5).toUpperCase() + Math.floor(Math.random() * 99);
-      fetchSubjects();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Error creating student");
-    }
-  };
+
 
   const handleSetWindow = async (e) => {
     e.preventDefault();
@@ -278,35 +237,7 @@ const TeacherDashboard = () => {
         </button>
       </div>
 
-      {/* ── SUCCESS MODAL ── */}
-      {showModal && createdStudent && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: "rgba(0,0,0,0.5)", display: "flex",
-          justifyContent: "center", alignItems: "center",
-          zIndex: 1000, backdropFilter: "blur(5px)",
-        }}>
-          <div className="stat-card" style={{ maxWidth: "400px", borderTop: "5px solid var(--secondary)", textAlign: "center" }}>
-            <div style={{ fontSize: "50px", marginBottom: "10px" }}>✅</div>
-            <h3 style={{ margin: "0 0 10px 0" }}>Student Created!</h3>
-            <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "20px" }}>
-              Share these credentials with the student.
-            </p>
-            <div style={{ backgroundColor: "#F9FAFB", padding: "15px", borderRadius: "10px", textAlign: "left", marginBottom: "20px", border: "1px solid rgba(0,0,0,0.05)" }}>
-              <p style={{ margin: "5px 0", fontSize: "14px" }}><strong>Name:</strong> {createdStudent.name}</p>
-              <p style={{ margin: "5px 0", fontSize: "14px" }}><strong>Email:</strong> {createdStudent.email}</p>
-              <p style={{ margin: "5px 0", fontSize: "14px" }}>
-                <strong>Password:</strong>{" "}
-                <code style={{ color: "var(--primary)", fontWeight: "bold" }}>{createdStudent.password}</code>
-              </p>
-              <p style={{ margin: "5px 0", fontSize: "14px" }}><strong>Subject:</strong> {createdStudent.subject}</p>
-            </div>
-            <button className="primary-btn pulse-btn" onClick={() => setShowModal(false)} style={{ width: "100%", margin: 0 }}>
-              Got it, Dismiss
-            </button>
-          </div>
-        </div>
-      )}
+
 
       {/* ── CONDITIONAL RENDER: DIRECTORY ── */}
       {activeTab === "directory" && (
@@ -480,47 +411,6 @@ const TeacherDashboard = () => {
                   </button>
                 </form>
               </section>
-
-              <section className="stat-card">
-                <h4 style={{ margin: "0 0 6px 0", fontSize: "20px", fontWeight: "700", color: "var(--primary)" }}>👤 Register New Student</h4>
-                <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "0", marginBottom: "24px" }}>
-                  Credentials will be generated securely.
-                </p>
-                <form onSubmit={handleCreateStudent} style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-                  <div className="input-group">
-                    <label style={{ fontSize: "13px", fontWeight: "700", color: "var(--secondary)" }}>Full Name</label>
-                    <div className="input-icon-wrapper">
-                      <input type="text" placeholder="e.g. Jane Smith" value={studentData.name}
-                        onChange={(e) => handleStudentFieldChange("name", e.target.value)} required />
-                    </div>
-                  </div>
-                  <div className="input-group">
-                    <label style={{ fontSize: "13px", fontWeight: "700", color: "var(--secondary)" }}>Email Address</label>
-                    <div className="input-icon-wrapper">
-                      <input type="email" placeholder="e.g. jane@student.edu" value={studentData.email}
-                        onChange={(e) => handleStudentFieldChange("email", e.target.value)} required />
-                    </div>
-                  </div>
-                  <div className="input-group">
-                     <label style={{ fontSize: "13px", fontWeight: "700", color: "var(--secondary)" }}>Auto-Generated Password</label>
-                    <div className="input-icon-wrapper">
-                      <input type="text" placeholder="Password"
-                        style={{ backgroundColor: "rgba(0,0,0,0.02)", color: "var(--secondary)", fontWeight: "600" }} value={studentData.password}
-                        onChange={(e) => setStudentData({ ...studentData, password: e.target.value })} required />
-                    </div>
-                  </div>
-                  <div className="input-group">
-                    <label style={{ fontSize: "13px", fontWeight: "700", color: "var(--secondary)" }}>Enroll in Subject (Optional)</label>
-                    <select value={studentSubject} onChange={(e) => setStudentSubject(e.target.value)} className="custom-select">
-                      <option value="">-- Do not enroll yet --</option>
-                      {subjects.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
-                    </select>
-                  </div>
-                  <button type="submit" className="primary-btn pulse-btn" style={{ padding: "16px", marginTop: "8px" }}>
-                    Register Student
-                  </button>
-                </form>
-              </section>
             </div>
 
             {/* RIGHT */}
@@ -552,28 +442,6 @@ const TeacherDashboard = () => {
                 </form>
               </section>
 
-              <section className="stat-card">
-                <h4 style={{ margin: "0 0 15px 0", fontSize: "20px", fontWeight: "700", color: "var(--primary)" }}>📚 My Subjects Overview</h4>
-                <ul style={{ padding: "0", margin: "0", listStyle: "none" }}>
-                  {subjects.length === 0 && (
-                    <div style={{ padding: "30px", textAlign: "center", background: "var(--card-bg)", borderRadius: "12px" }}>
-                      <p style={{ fontSize: "14px", color: "var(--text-muted)", margin: 0 }}>No subjects created yet.</p>
-                    </div>
-                  )}
-                  {subjects.map((s) => (
-                    <li key={s._id} style={{
-                      padding: "16px 20px", backgroundColor: "var(--card-bg)",
-                      borderRadius: "12px", marginBottom: "12px", border: "1px solid rgba(0,0,0,0.05)",
-                      display: "flex", justifyContent: "space-between", alignItems: "center"
-                    }}>
-                      <strong style={{ display: "block", color: "var(--primary)", fontSize: "16px" }}>{s.name}</strong>
-                      <span style={{ fontSize: "13px", color: "var(--secondary)", fontWeight: "600", background: "rgba(107,91,97,0.1)", padding: "4px 10px", borderRadius: "12px" }}>
-                        {s.students.length} Enrolled
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
             </div>
           </div>
         </>
