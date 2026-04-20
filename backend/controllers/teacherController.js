@@ -13,13 +13,14 @@ exports.createStudent = async (req, res) => {
       return res.status(403).json({ message: "Only teachers can create students" });
     }
 
-    const existing = await User.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+    const existing = await User.findOne({ email: normalizedEmail });
     if (existing) return res.status(400).json({ message: "Student email already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const student = await User.create({
       name,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       role: "student",
     });
@@ -43,7 +44,11 @@ exports.enrollExistingStudent = async (req, res) => {
       return res.status(403).json({ message: "Not authorized to manage this subject" });
     }
 
-    const student = await User.findOne({ email: studentEmail.trim().toLowerCase(), role: "student" });
+    // Case-insensitive lookup to handle existing mixed-case emails
+    const student = await User.findOne({ 
+      email: { $regex: new RegExp("^" + studentEmail.trim() + "$", "i") }, 
+      role: "student" 
+    });
     if (!student) {
       return res.status(404).json({ message: "No student account found with that email" });
     }
@@ -98,7 +103,10 @@ exports.addStudentsToSubject = async (req, res) => {
       return res.status(403).json({ message: "Not authorized to manage this subject" });
     }
 
-    const student = await User.findOne({ email: studentEmail, role: "student" });
+    const student = await User.findOne({ 
+      email: { $regex: new RegExp("^" + studentEmail.trim() + "$", "i") }, 
+      role: "student" 
+    });
     if (!student) return res.status(404).json({ message: "Student not found" });
 
     if (subject.students.includes(student._id)) {

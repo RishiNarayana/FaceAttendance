@@ -77,17 +77,21 @@ const EnrollStudent = () => {
 
   const handleCreateStudent = async (e) => {
     e.preventDefault();
+    const preparedData = { ...studentData, email: studentData.email.trim() };
     try {
-      await api.post("/teacher/create-student", studentData);
+      await api.post("/teacher/create-student", preparedData);
       if (studentSubject) {
-        await api.post("/teacher/add-students", {
-          subjectId: studentSubject,
-          studentEmail: studentData.email,
-        });
+        const subjectName = subjects.find(s => s._id === studentSubject)?.name;
+        if (window.confirm(`Enroll the new student in "${subjectName}"?`)) {
+          await api.post("/teacher/add-students", {
+            subjectId: studentSubject,
+            studentEmail: preparedData.email,
+          });
+        }
       }
       setCreatedStudent({
         ...studentData,
-        subject: subjects.find((s) => s._id === studentSubject)?.name || "Not Enrolled",
+        subject: studentSubject ? subjects.find((s) => s._id === studentSubject)?.name || "Not Enrolled" : "Not Enrolled",
       });
       setShowModal(true);
       setStudentData({ name: "", email: "", password: "" });
@@ -105,6 +109,9 @@ const EnrollStudent = () => {
     e.preventDefault();
     if (!enrollEmail.trim()) return toast.warn("Please enter the student's email address.");
     if (!enrollSubjectId)    return toast.warn("Please select a subject.");
+
+    const subjectName = subjects.find(s => s._id === enrollSubjectId)?.name;
+    if (!window.confirm(`Are you sure you want to enroll ${enrollEmail.trim()} in "${subjectName}"?`)) return;
 
     setEnrollLoading(true);
     setEnrollResult(null);

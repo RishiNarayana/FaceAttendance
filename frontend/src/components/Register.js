@@ -52,7 +52,7 @@ const Register = () => {
     try {
       await api.post("/auth/register", {
         name: formData.name,
-        email: formData.email,
+        email: formData.email.trim(),
         password: formData.password,
         role: "teacher", // Hardcoded strictly for Faculty members
       });
