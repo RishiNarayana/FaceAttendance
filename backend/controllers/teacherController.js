@@ -255,3 +255,13 @@ exports.rejectAttendance = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// GET /api/teacher/all-students
+exports.getAllStudents = async (req, res) => {
+  try {
+    const students = await User.find({ role: "student" }).select("name email _id").lean();
+    res.json(students);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

@@ -22,6 +22,12 @@ const Icons = {
       <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
     </svg>
   ),
+  History: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <polyline points="12 6 12 12 16 14"></polyline>
+    </svg>
+  ),
   Settings: () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="3"/>
@@ -111,18 +117,32 @@ const Sidebar = () => {
           </div>
           
           {user?.role === "student" && (
-            <div 
-              style={{ 
-                padding: "16px", borderRadius: "16px", cursor: "pointer", 
-                background: isActive("/analytics") ? "var(--primary)" : "transparent",
-                color: isActive("/analytics") ? "white" : "var(--secondary)",
-                fontWeight: "600", display: "flex", alignItems: "center", gap: "12px", transition: "0.2s",
-                justifyContent: isCollapsed ? "center" : "flex-start"
-              }} 
-              onClick={() => navigate("/analytics")}
-            >
-              <Icons.Logs /> {!isCollapsed && <span>Analytics</span>}
-            </div>
+            <>
+              <div 
+                style={{ 
+                  padding: "16px", borderRadius: "16px", cursor: "pointer", 
+                  background: isActive("/analytics") ? "var(--primary)" : "transparent",
+                  color: isActive("/analytics") ? "white" : "var(--secondary)",
+                  fontWeight: "600", display: "flex", alignItems: "center", gap: "12px", transition: "0.2s",
+                  justifyContent: isCollapsed ? "center" : "flex-start"
+                }} 
+                onClick={() => navigate("/analytics")}
+              >
+                <Icons.Logs /> {!isCollapsed && <span>Analytics</span>}
+              </div>
+              <div 
+                style={{ 
+                  padding: "16px", borderRadius: "16px", cursor: "pointer", 
+                  background: isActive("/history") ? "var(--primary)" : "transparent",
+                  color: isActive("/history") ? "white" : "var(--secondary)",
+                  fontWeight: "600", display: "flex", alignItems: "center", gap: "12px", transition: "0.2s",
+                  justifyContent: isCollapsed ? "center" : "flex-start"
+                }} 
+                onClick={() => navigate("/history")}
+              >
+                <Icons.History /> {!isCollapsed && <span>History</span>}
+              </div>
+            </>
           )}
 
           {(user?.role === "teacher" || user?.role === "admin") && (
@@ -176,10 +196,16 @@ const Sidebar = () => {
         </div>
         
         {user?.role === "student" && (
-          <div className={`bottom-nav-item ${isActive("/analytics")}`} onClick={() => navigate("/analytics")}>
-            <Icons.Logs />
-            <span>Logs</span>
-          </div>
+            <>
+              <div className={`bottom-nav-item ${isActive("/analytics")}`} onClick={() => navigate("/analytics")}>
+                <Icons.Logs />
+                <span>Logs</span>
+              </div>
+              <div className={`bottom-nav-item ${isActive("/history")}`} onClick={() => navigate("/history")}>
+                <Icons.History />
+                <span>History</span>
+              </div>
+            </>
         )}
 
         {(user?.role === "teacher" || user?.role === "admin") && (

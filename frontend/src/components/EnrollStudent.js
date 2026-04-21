@@ -26,6 +26,7 @@ const EnrollStudent = () => {
 
   // ── Shared data ─────────────────────────────────────────────────────────────
   const [subjects, setSubjects] = useState([]);
+  const [allStudents, setAllStudents] = useState([]);
 
   // ── Register New Student state ───────────────────────────────────────────────
   const passSuffixRef = useRef(
@@ -43,7 +44,7 @@ const EnrollStudent = () => {
   const [enrollResult, setEnrollResult]     = useState(null);   // success payload
   const [enrollNotFound, setEnrollNotFound] = useState(null);   // email string when 404
 
-  // ── Fetch subjects ────────────────────────────────────────────────────────────
+  // ── Fetch subjects & students ──────────────────────────────────────────────────
   const fetchSubjects = useCallback(async () => {
     try {
       const res = await api.get("/teacher/my-subjects");
@@ -54,7 +55,20 @@ const EnrollStudent = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.token]);
 
-  useEffect(() => { fetchSubjects(); }, [fetchSubjects]);
+  const fetchAllStudents = useCallback(async () => {
+    try {
+      const res = await api.get("/teacher/all-students");
+      setAllStudents(res.data);
+    } catch (err) {
+      console.error("Failed to load all students", err);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.token]);
+
+  useEffect(() => { 
+    fetchSubjects(); 
+    fetchAllStudents();
+  }, [fetchSubjects, fetchAllStudents]);
 
   // Reset enroll result when inputs change
   useEffect(() => {
@@ -278,12 +292,20 @@ const EnrollStudent = () => {
                   <input
                     id="enroll-email"
                     type="email"
+                    list="registered-students"
                     placeholder="e.g. jane@student.edu"
                     value={enrollEmail}
                     onChange={(e) => setEnrollEmail(e.target.value)}
                     required
                     style={{ paddingLeft: "40px" }}
                   />
+                  <datalist id="registered-students">
+                    {allStudents.map(s => (
+                      <option key={s._id} value={s.email}>
+                        {s.name} ({s.email})
+                      </option>
+                    ))}
+                  </datalist>
                 </div>
                 <p style={{ margin: "4px 0 0", fontSize: "12px", color: "var(--text-muted)" }}>
                   Must match the email on the student's existing account exactly.

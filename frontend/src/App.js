@@ -8,6 +8,7 @@ import Dashboard from "./components/Dashboard";
 import Profile from "./components/Profile";
 import StudentAnalytics from "./components/StudentAnalytics";
 import EnrollStudent from "./components/EnrollStudent";
+import AttendanceHistory from "./components/AttendanceHistory";
 
 // Protects any route that requires login.
 // Optionally restrict to specific roles (e.g. roles={["teacher"]}).
@@ -54,6 +55,14 @@ function App() {
               element={
                 <ProtectedRoute roles={["student"]}>
                   <StudentAnalytics />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/history"
+              element={
+                <ProtectedRoute roles={["student"]}>
+                  <AttendanceHistory />
                 </ProtectedRoute>
               }
             />

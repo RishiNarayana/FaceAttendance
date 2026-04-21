@@ -10,6 +10,7 @@ const {
   getPendingAttendance,
   approveAttendance,
   rejectAttendance,
+  getAllStudents,
 } = require("../controllers/teacherController");
 const { protect, authorize } = require("../middleware/authMiddleware");
 const router = express.Router();
@@ -23,6 +24,7 @@ router.post("/add-students",                      addStudentsToSubject);
 router.post("/enroll-student",                    enrollExistingStudent);
 router.post("/set-window",                        setAttendanceWindow);
 router.post("/create-student",                    createStudent);
+router.get("/all-students",                       getAllStudents);
 router.get("/attendance/:subjectId",              getAttendanceReport);
 
 // ── Pending-approval review flow ──────────────────────────────────────────────

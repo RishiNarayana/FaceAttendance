@@ -10,7 +10,7 @@ exports.register = async (req, res) => {
   const { name, email, password, role } = req.body;
   try {
     const normalizedEmail = email.toLowerCase().trim();
-    const userExists = await User.findOne({ email: normalizedEmail });
+    const userExists = await User.findOne({ email: new RegExp('^' + normalizedEmail + '$', 'i') });
     if (userExists) return res.status(400).json({ message: "User already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -32,8 +32,14 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const normalizedEmail = email.toLowerCase().trim();
-    const user = await User.findOne({ email: normalizedEmail });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    const user = await User.findOne({ email: new RegExp('^' + normalizedEmail + '$', 'i') });
+    console.log("Login attempt:", { email, normalizedEmail, userFound: !!user });
+    let passwordMatch = false;
+    if (user) {
+        passwordMatch = await bcrypt.compare(password, user.password);
+        console.log("Password match result:", passwordMatch);
+    }
+    if (!user || !passwordMatch) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
